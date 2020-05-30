@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+	<title>Gil Soffer</title>
+	<link rel="icon" href="/assets/images/favicon.png">
+	<meta charset="utf-8">
+	<meta name="description" content="Gil Soffer: Personal Website">
+	<meta name="author" content="Gil Soffer">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel=stylesheet type=text/css href="/assets/css/app.css">
+	<link rel=stylesheet type=text/css href="/assets/css/default.css"><!-- used by highlight.js (I modified this css to my liking) -->
+</head>
+
+<body>
+
+	<div class="container-fluid">
+
+		<nav id='site-nav'>
+			<div id='site-nav-header'>
+				<a id='site-nav-home' href="/">Gil Soffer</a>
+				<button type="button" id='site-nav-button' data-toggle="collapse" data-target="#site-nav-links">
+					<span class="site-nav-button-bar"></span>
+					<span class="site-nav-button-bar"></span>
+					<span class="site-nav-button-bar"></span>
+				</button>
+			</div>
+			<div id='site-nav-links' class="collapse">
+				<ul>
+					<li><a href="/web-development">Web Development</a></li>
+					<li><a href="/electronics">Electronics</a></li>
+					<li><a href="https://github.com/gsoffer" target="_blank" class="external">GitHub</a></li>
+					<li><a href="https://www.linkedin.com/in/gil-soffer" target="_blank" class="external">LinkedIn</a></li>
+					<li><a href="mailto:gsoffer2@gmail.com" class="external">Contact</a></li>
+				</ul>
+			</div>
+		</nav>
+
+		
+	<div id='project-title'>Glowing Tulips</div>
+	<div id='project-hr'></div><br class='project-br'>
+	<div id='project-nav-button'>
+		<button id='project-nav-button-show' onclick="projectNavShow()">Sections &ensp; +</button>
+		<button id='project-nav-button-hide' onclick="projectNavHide()">Sections &ensp; &ndash;</button>
+	</div>
+	<div id='project-nav' class="project-nav-hide">
+		<a href="/glowing-tulips">Overview</a><br class='project-br'><br class='project-br'>
+		<a href="/glowing-tulips-hardware">Hardware</a><br class='project-br'><br class='project-br'>
+		<a href="/glowing-tulips-c-code">C Code</a>
+	</div>
+
+	
+	<div id='content'>
+
+		<p class='header1'>Hardware Diagram</p>
+
+		<p>
+			The diagram below shows how all of the components are physically connected and wired. This project involved a lot of precision soldering, since I had to ensure that the leads of the four wires in each bulb would not touch once I stuffed them snuggly within the stem.
+		</p><br>
+
+		<img class='hardware_images' src="/assets/images/Tulips_Hardware.jpg" alt="Glowing Tulips Wiring Diagram"><br><br><br><br><br>
+
+		<a href="/glowing-tulips-c-code" class="continue_to">&#8680; Continue to C Code</a><br><br><br><br><br>
+
+	</div>
+
+
+
+		<div id='prefooter'></div>
+	</div>
+
+	<div id='footer'>
+		<div>&copy; Gil Soffer</div>
+	</div>
+
+</body>
+
+<script type="text/javascript" src="/assets/javascript/jquery.min.js"></script><!-- bootstrap requires jquery -->
+<script type="text/javascript" src="/assets/javascript/bootstrap.min.js"></script>
+<script type="text/javascript" src="/assets/javascript/app.js"></script>
+<script type="text/javascript" src="/assets/javascript/highlight.pack.js"></script><!-- i included Bash, SQL, Arduino, and Python - re-download and replace for more languages (don't need to replace default.css) -->
+<script>hljs.initHighlightingOnLoad();</script>
+
+</html>

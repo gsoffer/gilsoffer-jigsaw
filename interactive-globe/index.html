@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+	<title>Gil Soffer</title>
+	<link rel="icon" href="/assets/images/favicon.png">
+	<meta charset="utf-8">
+	<meta name="description" content="Gil Soffer: Personal Website">
+	<meta name="author" content="Gil Soffer">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel=stylesheet type=text/css href="/assets/css/app.css">
+	<link rel=stylesheet type=text/css href="/assets/css/default.css"><!-- used by highlight.js (I modified this css to my liking) -->
+</head>
+
+<body>
+
+	<div class="container-fluid">
+
+		<nav id='site-nav'>
+			<div id='site-nav-header'>
+				<a id='site-nav-home' href="/">Gil Soffer</a>
+				<button type="button" id='site-nav-button' data-toggle="collapse" data-target="#site-nav-links">
+					<span class="site-nav-button-bar"></span>
+					<span class="site-nav-button-bar"></span>
+					<span class="site-nav-button-bar"></span>
+				</button>
+			</div>
+			<div id='site-nav-links' class="collapse">
+				<ul>
+					<li><a href="/web-development">Web Development</a></li>
+					<li><a href="/electronics">Electronics</a></li>
+					<li><a href="https://github.com/gsoffer" target="_blank" class="external">GitHub</a></li>
+					<li><a href="https://www.linkedin.com/in/gil-soffer" target="_blank" class="external">LinkedIn</a></li>
+					<li><a href="mailto:gsoffer2@gmail.com" class="external">Contact</a></li>
+				</ul>
+			</div>
+		</nav>
+
+		
+	<div id='project-title'>Interactive Globe</div>
+	<div id='project-hr'></div><br class='project-br'>
+	<div id='project-nav-button'>
+		<button id='project-nav-button-show' onclick="projectNavShow()">Sections &ensp; +</button>
+		<button id='project-nav-button-hide' onclick="projectNavHide()">Sections &ensp; &ndash;</button>
+	</div>
+	<div id='project-nav' class="project-nav-hide">
+		<a href="/interactive-globe">Overview</a><br class='project-br'><br class='project-br'>
+		<a href="/interactive-globe-sqlite">SQLite</a><br class='project-br'><br class='project-br'>
+		<a href="/interactive-globe-speech">Speech</a><br class='project-br'><br class='project-br'>
+		<a href="/interactive-globe-hardware">Hardware</a><br class='project-br'><br class='project-br'>
+		<a href="/interactive-globe-python">Python</a>
+	</div>
+
+	
+	<div id='content'>
+
+		<p class='header1'>Overview</p>
+		<p>
+			<b>A globe that can be spoken to and navigated, all powered by the Raspberry Pi</b><br><br>
+			When spoken the name of a city, state, or country, in the world, the globe moves to shine a laser at that location, and then reads aloud corresponding demographic information about it. Audio is recorded while the push-button is pressed down. A USB microphone is used for audio input, and USB powered speakers are used for audio output. Additionally, a laser diode is used to point at the appropriate location. Three servo motors are used together for longitudinal motion, for a full 360 degree sweep. And one additional motor is used for latitude. The motors have less than 180 degrees of motion, so the arm can't sweep completely to the north or south poles using one latitudinal motor, but this isn't a problem because the only location affected is Antarctica, and the arm still sweeps far enough to hit the broader continent. Also, in order to account for the globe's inertia (it will not actually move if the longitude changes by less than 15 degrees), the globe moves 80 degrees to the left or right of the final position first, and then moves to the correct position, gaining momentum as it moves to the correct location.
+		</p><br>
+
+		<p class='header1'>Videos</p>
+		<div class='div-iframe'>
+			<iframe src="https://www.youtube.com/embed/F94laFUa5Vo" frameborder="0" allowfullscreen></iframe>
+		</div><br><br>
+		<div class='div-iframe'>
+			<iframe src="https://www.youtube.com/embed/n4xVbyRYsHU" frameborder="0" allowfullscreen></iframe>
+		</div><br><br>
+		<div class='div-iframe'>
+		<iframe src="https://www.youtube.com/embed/vYWf7qeQ80I" frameborder="0" allowfullscreen></iframe>
+		</div><br><br>
+		<div class='div-iframe'>
+		<iframe src="https://www.youtube.com/embed/PBADssU1rVQ" frameborder="0" allowfullscreen></iframe>
+		</div><br><br>
+		<div class='div-iframe'>
+		<iframe src="https://www.youtube.com/embed/dAjCLA3nFog" frameborder="0" allowfullscreen></iframe>
+		</div><br><br><br>
+
+		<p class='header1'>Creation</p>
+		<div class="slideshow">
+						<img class="slideshow_images" src="/assets/images/Globe_1.jpg">
+						<img class="slideshow_images" src="/assets/images/Globe_2.jpg">
+						<img class="slideshow_images" src="/assets/images/Globe_3.jpg">
+						<img class="slideshow_images" src="/assets/images/Globe_4.jpg">
+						<img class="slideshow_images" src="/assets/images/Globe_5.jpg">
+						<img class="slideshow_images" src="/assets/images/Globe_6.jpg">
+						<img class="slideshow_images" src="/assets/images/Globe_7.jpg">
+						<img class="slideshow_images" src="/assets/images/Globe_8.jpg">
+						<img class="slideshow_images" src="/assets/images/Globe_9.jpg">
+						<img class="slideshow_images" src="/assets/images/Globe_10.jpg">
+						<img class="slideshow_images" src="/assets/images/Globe_11.jpg">
+						<img class="slideshow_images" src="/assets/images/Globe_12.jpg">
+						<img class="slideshow_images" src="/assets/images/Globe_13.jpg">
+						<img class="slideshow_images" src="/assets/images/Globe_14.jpg">
+						<img class="slideshow_images" src="/assets/images/Globe_15.jpg">
+						<img class="slideshow_images" src="/assets/images/Globe_16.jpg">
+						<img class="slideshow_images" src="/assets/images/Globe_17.jpg">
+						<img class="slideshow_images" src="/assets/images/Globe_18.jpg">
+						<img class="slideshow_images" src="/assets/images/Globe_19.jpg">
+						<img class="slideshow_images" src="/assets/images/Globe_20.jpg">
+						<img class="slideshow_images" src="/assets/images/Globe_21.jpg">
+						<img class="slideshow_images" src="/assets/images/Globe_22.jpg">
+						<a class="slideshow_buttons" style="left:0;" onclick="changeImage(-1)">&#10094;</a>
+			<a class="slideshow_buttons" style="right:0;" onclick="changeImage(1)">&#10095;</a>
+		</div><br><br><br><br><br>
+
+		<a href="/interactive-globe-sqlite" class="continue_to">&#8680; Continue to SQLite Database</a><br><br><br><br><br>
+
+	</div>
+
+
+
+		<div id='prefooter'></div>
+	</div>
+
+	<div id='footer'>
+		<div>&copy; Gil Soffer</div>
+	</div>
+
+</body>
+
+<script type="text/javascript" src="/assets/javascript/jquery.min.js"></script><!-- bootstrap requires jquery -->
+<script type="text/javascript" src="/assets/javascript/bootstrap.min.js"></script>
+<script type="text/javascript" src="/assets/javascript/app.js"></script>
+<script type="text/javascript" src="/assets/javascript/highlight.pack.js"></script><!-- i included Bash, SQL, Arduino, and Python - re-download and replace for more languages (don't need to replace default.css) -->
+<script>hljs.initHighlightingOnLoad();</script>
+
+</html>

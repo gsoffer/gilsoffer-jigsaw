@@ -1,0 +1,760 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+	<title>Gil Soffer</title>
+	<link rel="icon" href="/assets/images/favicon.png">
+	<meta charset="utf-8">
+	<meta name="description" content="Gil Soffer: Personal Website">
+	<meta name="author" content="Gil Soffer">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel=stylesheet type=text/css href="/assets/css/app.css">
+	<link rel=stylesheet type=text/css href="/assets/css/default.css"><!-- used by highlight.js (I modified this css to my liking) -->
+</head>
+
+<body>
+
+	<div class="container-fluid">
+
+		<nav id='site-nav'>
+			<div id='site-nav-header'>
+				<a id='site-nav-home' href="/">Gil Soffer</a>
+				<button type="button" id='site-nav-button' data-toggle="collapse" data-target="#site-nav-links">
+					<span class="site-nav-button-bar"></span>
+					<span class="site-nav-button-bar"></span>
+					<span class="site-nav-button-bar"></span>
+				</button>
+			</div>
+			<div id='site-nav-links' class="collapse">
+				<ul>
+					<li><a href="/web-development">Web Development</a></li>
+					<li><a href="/electronics">Electronics</a></li>
+					<li><a href="https://github.com/gsoffer" target="_blank" class="external">GitHub</a></li>
+					<li><a href="https://www.linkedin.com/in/gil-soffer" target="_blank" class="external">LinkedIn</a></li>
+					<li><a href="mailto:gsoffer2@gmail.com" class="external">Contact</a></li>
+				</ul>
+			</div>
+		</nav>
+
+		
+	<div id='project-title'>Interactive Globe</div>
+	<div id='project-hr'></div><br class='project-br'>
+	<div id='project-nav-button'>
+		<button id='project-nav-button-show' onclick="projectNavShow()">Sections &ensp; +</button>
+		<button id='project-nav-button-hide' onclick="projectNavHide()">Sections &ensp; &ndash;</button>
+	</div>
+	<div id='project-nav' class="project-nav-hide">
+		<a href="/interactive-globe">Overview</a><br class='project-br'><br class='project-br'>
+		<a href="/interactive-globe-sqlite">SQLite</a><br class='project-br'><br class='project-br'>
+		<a href="/interactive-globe-speech">Speech</a><br class='project-br'><br class='project-br'>
+		<a href="/interactive-globe-hardware">Hardware</a><br class='project-br'><br class='project-br'>
+		<a href="/interactive-globe-python">Python</a>
+	</div>
+
+	
+	<div id='content'>
+
+		<p class='header1'>SQLite Database</p>
+
+
+
+
+		<p class="header2">Overview:</p>
+		<p>
+			For this project, a server-based database configuration is not necessary. The Pi can read all the necessary geographic data from it's own filesystem. Therefore, SQLite is a perfect choice. The idea behind this project is that, once the globe is vocally provided a location, it points a laser on that location, speaks aloud some demographic data about the region, and allows the user to then travel deeper within that location (for countries and US states), or to choose a different region of the globe entirely.
+		</p>
+
+		<p>
+			The end result of the work shown below is a single final SQLite table that gets queried by the Raspberry Pi in order to pull geographic information about the location the user has specified. This information includes population size, capital, primary language, and currency for countries, US states, and cities with population over 15,000. In addition, longitude and latitude are stored in order to point the laser at the appropriate location.
+		</p><br><br>
+
+
+
+
+		<p class="header2">Database Creation:</p>
+		<p>
+			From a terminal, create a Sqlite folder within your home folder (or wherever) where everything will be stored:<br>
+			<pre><code class="code lang-bash">mkdir ~/Sqlite;
+cd ~/Sqlite;</code></pre>
+		</p>
+		<p>
+			Also create a subfolder where all of the import files will be saved and referenced:<br>
+		<pre><code class="code lang-bash">mkdir ~/Sqlite/Geo_Imports;</code></pre>
+		</p><br>
+
+		<p>
+			Then create the actual database (I named it "Geo"), using the SQLite command-line tool.<br>
+			Note: This command must be run each time a new Sqlite session is started, to connect to the existing database:<br>
+			<pre><code class="code lang-bash">sqlite3 Geo.db;</code></pre>
+		</p>
+		<p>
+			Verify that the database was created:<br>
+			<pre><code class="code lang-bash">.databases</code></pre>
+		</p><br>
+
+		<p>
+			Attach an alias to the database for easier referencing:<br>
+			Note: This must be re-attached each time you start a new Sqlite session:<br>
+			<pre><code class="code lang-bash">attach database 'Geo.db' as 'geo';</code></pre>
+		</p>
+		<p>
+			Verify again (two results should now be listed, both pointing to our Geo.db file, with one named geo):<br>
+			<pre><code class="code lang-bash">.databases</code></pre>
+		</p><br>
+
+		<p>
+			All of the geographic data needed for this project is publicly available at http://www.geonames.org. This site is an amazing public source for geographic and demographic information. It makes available daily updated exports of city and country information, and is the perfect content for this database. The exports can be downloaded here:<br>
+			http://download.geonames.org/export/dump/
+		</p>
+		<p>
+			Download the following (and place in the Geo_Imports folder):<br>
+			&nbsp;&nbsp;&nbsp; - <i>allCountries.zip</i> - This contains a record for each city, country, and landmark<br>
+			&nbsp;&nbsp;&nbsp; - <i>cities15000.zip</i> - This is a subset of the above file, but only includes cities with populations over 15,000<br>
+			&nbsp;&nbsp;&nbsp; - <i>countryinfo.txt</i> - Country capitals, currencies, and languages (plus more)<br>
+			&nbsp;&nbsp;&nbsp; - <i>iso-languagecodes.txt</i> - Maps language code to language<br>
+			&nbsp;&nbsp;&nbsp; - <i>readme.txt</i> - Explains the layouts of all these files
+		</p>
+		<p>
+			<i>"allCountries.zip"</i> is really the complete file of all global cities, but it also contains historical landmarks, monuments, famous hotels, etc., and so, for the purpose of this project, includes unnecessary information. For cleanliness and optimal performance, I limited this project to the following locations:<br>
+			&nbsp;&nbsp;&nbsp; - All cities with populations of at least 15,000<br>
+			&nbsp;&nbsp;&nbsp; - All US states<br>
+			&nbsp;&nbsp;&nbsp; - All countries in the world
+		</p><br><br>
+
+
+
+
+		<p class="header2">Cities Table:</p>
+		<p>
+			From within the sqlite3 command prompt, create the table of cities with population over 15,000:<br>
+			<pre><code class="code lang-sql">create table geo.cities15000 (
+   Geo_Name_ID integer not null unique primary key,
+   Name varchar(200),
+   Ascii_Name varchar(200),
+   Alternate_Names varchar(10),
+   Latitude decimal(18,6),
+   Longitude decimal(18,6),
+   Feature_Class varchar(1),
+   Feature_Code varchar(10),
+   Country_Code varchar(2),
+   Alternate_Country_Codes varchar(60),
+   Admin1_Code varchar(20),
+   Admin2_Code varchar(80),
+   Admin3_Code varchar(20),
+   Admin4_Code varchar(20),
+   Population bigint,
+   Elevation varchar(20),
+   Digital_Elevation_Model integer,
+   Time_Zone_ID varchar(40),
+   Modification_Date date
+);</code></pre>
+		</p>
+		<p>
+			Verify with:<br>
+			<pre><code class="code lang-bash">.tables</code></pre>
+		</p><br>
+		<p>
+			The problem with the command-line Sqlite tool is that importing doesn't work for sufficiently large files, which is the case for two of the files downloaded. Therefore, the solution is to parse through the data in Python instead, and import directly into Sqlite from within the Python scripts. Python is also beneficial as it is used here to parse through the import file and only insert the necessary records and fields.
+		</p>
+		<p>
+			Insert into the cities15000 table (Python Script - run from ~/Sqlite):<br>
+			<pre><code class="code lang-python">#!/usr/bin/env python2.7
+
+fin = open('Geo_Imports/cities15000.txt', "r"); # read in the text file
+imported_file = fin.readlines(); # store the contents of the input file as an array of lines (the lines are just strings, not arrays of field values)
+fin.close(); # end reading the file once our array has been assigned
+
+import sqlite3; # Sqlite python module
+conn = sqlite3.connect('Geo.db'); # establish the connection to the Sqlite database
+conn.text_factory = str; # necessary to import 8-bit bytestrings - these input files are not unicode
+c = conn.cursor(); # create a cursor object to call its execute method for the connection
+c.execute("attach database 'Geo.db' as 'geo'"); # attach the database alias
+
+for line in imported_file:
+   columns = line.split('\t') # store the contents of each line as an array of column values
+   columns[3] = columns[3][:10] # not using the really long alternative names field, so truncating to 10 characters
+   columns[18] = columns[18].rstrip('\n') # remove the new line characters from last (19th) column
+   c.execute('insert into geo.cities15000 values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', columns) # insert each row into the Sqlite table
+
+conn.commit(); # commit all inserts
+conn.close(); # close the Sqlite connection</code></pre>
+		</p><br><br>
+
+
+
+
+		<p class="header2">Countries Table:</p>
+		<p>
+			Since the cities file does not include records for states and countries, these will be pulled separately from the master file (allCountries.txt).<br>
+			Using the SQLite command-line tool, create the table of all countries:
+			<pre><code class="code lang-sql">create table geo.allcountries_countries (
+   Geo_Name_ID integer not null unique primary key,
+   Name varchar(200),
+   Ascii_Name varchar(200),
+   Alternate_Names varchar(10),
+   Latitude decimal(18,6),
+   Longitude decimal(18,6),
+   Feature_Class varchar(1),
+   Feature_Code varchar(10),
+   Country_Code varchar(2),
+   Alternate_Country_Codes varchar(60),
+   Admin1_Code varchar(20),
+   Admin2_Code varchar(80),
+   Admin3_Code varchar(20),
+   Admin4_Code varchar(20),
+   Population bigint,
+   Elevation varchar(20),
+   Digital_Elevation_Model integer,
+   Time_Zone_ID varchar(40),
+   Modification_Date date
+);</code></pre>
+		</p><br>
+
+		<p>
+			All locations within the Geonames.org data have a unique Geo_Name_ID. In order to identify the country records, we source countryinfo.txt for those specific Geo_Name_ID values.<br>
+			Insert into the countries table (Python Script - run from ~/Sqlite):
+			<pre><code class="code lang-python">#!/usr/bin/env python2.7
+
+fin = open('Geo_Imports/allCountries.txt', "r"); # read in the text file
+imported_file = fin.readlines(); # store the contents of the input file as an array of lines (the lines are just strings, not arrays of field values)
+fin.close(); # end reading the file once our array has been assigned
+
+fin = open('Geo_Imports/countryinfo.txt', "r"); # read in the countries text file
+countryinfo = fin.readlines(); # store the contents of the input file as an array of lines (the lines are just strings, not arrays of field values)
+fin.close(); # end reading the file once our array has been assigned
+
+geonameids = []; # initialize the array of country geonameids
+for line in countryinfo:
+   if line[:1] != '#': # the file has a long header for which each line starts with pound, so we will ignore these
+      columns = line.split('\t') # store the contents of each line as an array of column values
+   if columns[16] != '': # if the geonameid is populated
+      geonameids.append(columns[16]) # add the geonameid to the list
+
+import sqlite3; # Sqlite python module
+conn = sqlite3.connect('Geo.db'); # establish the connection to the Sqlite database
+conn.text_factory = str; # necessary to import 8-bit bytestrings - these input files are not unicode
+c = conn.cursor(); # create a cursor object to call its execute method for the connection
+c.execute("attach database 'Geo.db' as 'geo'"); # attach the database alias
+
+for line in imported_file:
+   columns = line.split('\t') # store the contents of each line as an array of column values
+   columns[3] = columns[3][:10] # not using the really long alternative names field, so truncating to 10 characters
+   columns[18] = columns[18].rstrip('\n') # remove the new line characters from last (19th) column
+   if columns[0] in geonameids: # if it is a country record
+      c.execute('insert into geo.allcountries_countries values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', columns) # then insert the row into the Sqlite table
+
+conn.commit(); # commit all inserts
+conn.close(); # close the Sqlite connection</code></pre>
+		</p><br><br>
+
+
+
+
+		<p class="header2">US States Table:</p>
+		<p>
+			Using the SQLite command-line tool, create the table of US states:
+			<pre><code class="code lang-sql">create table geo.allcountries_states (
+   Geo_Name_ID integer not null unique primary key,
+   Name varchar(200),
+   Ascii_Name varchar(200),
+   Alternate_Names varchar(10),
+   Latitude decimal(18,6),
+   Longitude decimal(18,6),
+   Feature_Class varchar(1),
+   Feature_Code varchar(10),
+   Country_Code varchar(2),
+   Alternate_Country_Codes varchar(60),
+   Admin1_Code varchar(20),
+   Admin2_Code varchar(80),
+   Admin3_Code varchar(20),
+   Admin4_Code varchar(20),
+   Population bigint,
+   Elevation varchar(20),
+   Digital_Elevation_Model integer,
+   Time_Zone_ID varchar(40),
+   Modification_Date date
+);</code></pre>
+		</p><br>
+
+		<p>
+			The US state records will be identified in the large master file by the ascii_name values.<br>
+			Insert into the US States table (Python Script - run from ~/Sqlite):
+			<pre><code class="code lang-python">#!/usr/bin/env python2.7
+
+fin = open('Geo_Imports/allCountries.txt', "r"); # read in the text file
+imported_file = fin.readlines(); # store the contents of the input file as an array of lines (the lines are just strings, not arrays of field values)
+fin.close(); # end reading the file once our array has been assigned
+
+import sqlite3; # Sqlite python module
+conn = sqlite3.connect('Geo.db'); # establish the connection to the Sqlite database
+conn.text_factory = str; # necessary to import 8-bit bytestrings - these input files are not unicode
+c = conn.cursor(); # create a cursor object to call its execute method for the connection
+c.execute("attach database 'Geo.db' as 'geo'"); # attach the database alias
+
+all50states = [['Arkansas','AR'], ['Delaware','DE'], ['Florida','FL'], ['Georgia','GA'], ['Kansas','KS'], ['Louisiana','LA'], ['Maryland','MD'], ['Missouri','MO'], ['Mississippi','MS'], ['North Carolina','NC'], ['Oklahoma','OK'], ['South Carolina','SC'], ['Tennessee','TN'], ['Texas','TX'], ['West Virginia','WV'], ['Alabama','AL'], ['Connecticut','CT'], ['Iowa','IA'], ['Illinois','IL'], ['Indiana','IN'], ['Maine','ME'], ['Michigan','MI'], ['Minnesota','MN'], ['Nebraska','NE'], ['New Hampshire','NH'], ['New Jersey','NJ'], ['New York','NY'], ['Ohio','OH'], ['Rhode Island','RI'], ['Vermont','VT'], ['Wisconsin','WI'], ['California','CA'], ['Colorado','CO'], ['New Mexico','NM'], ['Nevada','NV'], ['Utah','UT'], ['Arizona','AZ'], ['Idaho','ID'], ['Montana','MT'], ['North Dakota','ND'], ['Oregon','OR'], ['South Dakota','SD'], ['Washington','WA'], ['Wyoming','WY'], ['Hawaii','HI'], ['Alaska','AK'], ['Kentucky','KY'], ['Massachusetts','MA'], ['Pennsylvania','PA'], ['Virginia','VA']];
+
+for line in imported_file:
+   columns = line.split('\t') # store the contents of each line as an array of column values
+   columns[3] = columns[3][:10] # not using the really long alternative names field, so truncating to 10 characters
+   columns[18] = columns[18].rstrip('\n') # remove the new line characters from last (19th) column
+   state = [columns[2],columns[10]]
+   if columns[8] == 'US' and state in all50states:
+      c.execute('insert into geo.allcountries_states values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', columns) # then insert the row into the Sqlite table
+
+conn.commit(); # commit all inserts
+conn.close(); # close the Sqlite connection</code></pre>
+		</p><br><br>
+
+
+
+
+		<p class="header2">Combined Geographic Locations Table:</p>
+		<p>
+			The three tables created above have some duplicate entries (ex: multiple records for the state of California), so a mass cleanup will be applied based on the combined dataset by choosing the latest modified record.<br>
+			Using the SQLite command-line tool, create the combined table with only the desired fields, and add the US State Code as a calculated field:
+			<pre><code class="code lang-sql">create table geo.geography_combined as
+select Geo_Name_ID,
+       Ascii_Name,
+       (case
+          when Admin1_Code in (
+             'AK', 'AL', 'AR', 'AZ', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA',
+             'HI', 'IA', 'ID', 'IL', 'IN', 'KS', 'KY', 'LA', 'MA', 'MD',
+             'ME', 'MI', 'MN', 'MO', 'MS', 'MT', 'NC', 'ND', 'NE', 'NH',
+             'NJ', 'NM', 'NV', 'NY', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC',
+             'SD', 'TN', 'TX', 'UT', 'VA', 'VT', 'WA', 'WI', 'WV', 'WY',
+             'DC'
+          ) and Country_Code = 'US' then Admin1_Code
+          else ''
+       end) as State_Code,
+       Country_Code,
+       Latitude,
+       Longitude,
+       Population,
+       Modification_Date
+from (
+   select * from geo.cities15000
+      union all
+   select * from geo.allcountries_countries
+      union all
+   select * from geo.allcountries_states
+);</code></pre>
+		</p>
+		<p>
+			Quickly check that we don’t have any nulls in any of the fields that make up our unique key (for which there are none, so that’s good to go):
+			<pre><code class="code lang-sql">select * from geo.geography_combined where ascii_name is null;
+select * from geo.geography_combined where state_code is null;
+select * from geo.geography_combined where country_code is null;</code></pre>
+		</p><br>
+
+		<p>
+			Create a unique version of the table by combination of city, state, and country (taking latest modified date):
+			<pre><code class="code lang-sql">create table geo.geography_combined_unique as
+select a.* from geo.geography_combined a
+inner join (
+   select ascii_name, state_code, country_code, max(modification_date) as modification_date
+   from geo.geography_combined
+   group by ascii_name, state_code, country_code
+) b on (a.ascii_name = b.ascii_name and a.state_code = b.state_code and a.country_code = b.country_code and
+a.modification_date = b.modification_date)
+;</code></pre>
+		</p>
+		<p>
+			Check for uniqueness (does not pass at this point):
+			<pre><code class="code lang-sql">select ascii_name, state_code, country_code, count(1) as cnt
+from geo.geography_combined_unique
+group by ascii_name, state_code, country_code
+having cnt > 1;</code></pre>
+		</p><br>
+
+		<p>
+			Taking the record with the last modified date ensures uniqueness in most cases, but in some cases we still have multiple entries. In this case it seems more appropriate to take the value with the largest geo_name_id, as these were most likely created last, and they generally have larger populations that seem more accurate.<br>
+			Therefore, delete the records for which geo_name_id is not the largest for each unique key combo:
+			<pre><code class="code lang-sql">delete from geo.geography_combined_unique
+where geo_name_id not in (
+   select distinct geo_name_id from (
+      select ascii_name, state_code, country_code, max(geo_name_id) as geo_name_id
+      from geo.geography_combined
+      group by ascii_name, state_code, country_code
+   )
+);</code></pre>
+		</p>
+		<p>
+			Check for uniqueness (now passes - empty result set):
+			<pre><code class="code lang-sql">select ascii_name, state_code, country_code, count(1) as cnt
+from geo.geography_combined_unique
+group by ascii_name, state_code, country_code
+having cnt > 1;</code></pre>
+		</p><br><br>
+
+
+
+
+		<p class="header2">US States Abbreviation Code to Name Mapping Table:</p>
+		<p>
+			Using the SQLite command-line tool, create a table of state names based on the abbreviations:
+			<pre><code class="code lang-sql">create table geo.states (
+   State_Code varchar(20) not null unique primary key,
+   State varchar(30) not null unique
+);
+
+insert into geo.states values ('AK', 'Alaska');
+insert into geo.states values ('AL', 'Alabama');
+insert into geo.states values ('AR', 'Arkansas');
+insert into geo.states values ('AZ', 'Arizona');
+insert into geo.states values ('CA', 'California');
+insert into geo.states values ('CO', 'Colorado');
+insert into geo.states values ('CT', 'Connecticut');
+insert into geo.states values ('DE', 'Delaware');
+insert into geo.states values ('FL', 'Florida');
+insert into geo.states values ('GA', 'Georgia');
+insert into geo.states values ('HI', 'Hawaii');
+insert into geo.states values ('IA', 'Iowa');
+insert into geo.states values ('ID', 'Idaho');
+insert into geo.states values ('IL', 'Illinois');
+insert into geo.states values ('IN', 'Indiana');
+insert into geo.states values ('KS', 'Kansas');
+insert into geo.states values ('KY', 'Kentucky');
+insert into geo.states values ('LA', 'Louisiana');
+insert into geo.states values ('MA', 'Massachusetts');
+insert into geo.states values ('MD', 'Maryland');
+insert into geo.states values ('ME', 'Maine');
+insert into geo.states values ('MI', 'Michigan');
+insert into geo.states values ('MN', 'Minnesota');
+insert into geo.states values ('MO', 'Missouri');
+insert into geo.states values ('MS', 'Mississippi');
+insert into geo.states values ('MT', 'Montana');
+insert into geo.states values ('NC', 'North Carolina');
+insert into geo.states values ('ND', 'North Dakota');
+insert into geo.states values ('NE', 'Nebraska');
+insert into geo.states values ('NH', 'New Hampshire');
+insert into geo.states values ('NJ', 'New Jersey');
+insert into geo.states values ('NM', 'New Mexico');
+insert into geo.states values ('NV', 'Nevada');
+insert into geo.states values ('NY', 'New York');
+insert into geo.states values ('OH', 'Ohio');
+insert into geo.states values ('OK', 'Oklahoma');
+insert into geo.states values ('OR', 'Oregon');
+insert into geo.states values ('PA', 'Pennsylvania');
+insert into geo.states values ('RI', 'Rhode Island');
+insert into geo.states values ('SC', 'South Carolina');
+insert into geo.states values ('SD', 'South Dakota');
+insert into geo.states values ('TN', 'Tennessee');
+insert into geo.states values ('TX', 'Texas');
+insert into geo.states values ('UT', 'Utah');
+insert into geo.states values ('VA', 'Virginia');
+insert into geo.states values ('VT', 'Vermont');
+insert into geo.states values ('WA', 'Washington');
+insert into geo.states values ('WI', 'Wisconsin');
+insert into geo.states values ('WV', 'West Virginia');
+insert into geo.states values ('WY', 'Wyoming');
+insert into geo.states values ('DC', 'Washington D C');</code></pre>
+		</p><br><br>
+
+
+
+
+		<p class="header2">Country Info Table:</p>
+		<p>
+			Using the SQLite command-line tool, create a clean country info table that only keeps the desired field and parses out the primary language:
+			<pre><code class="code lang-sql">create table geo.countryinfo (
+   Geo_Name_ID integer,
+   Country_Code varchar(2) not null unique primary key,
+   Country varchar(50),
+   Capital varchar(50),
+   Currency_Name varchar(20),
+   Primary_Language_Code varchar(10)
+);</code></pre>
+		</p><br>
+
+		<p>
+			Insert into the Country Info table (Python Script - run from ~/Sqlite):
+			<pre><code class="code lang-python">#!/usr/bin/env python2.7
+
+fin = open('Geo_Imports/countryinfo.txt', "r"); # read in the text file
+imported_file = fin.readlines(); # store the contents of the input file as an array of lines (the lines are just strings here, not arrays of field values)
+fin.close(); # end reading the file once our array has been assigned
+
+import sqlite3; # Sqlite python module
+conn = sqlite3.connect('Geo.db'); # establish the connection to the Sqlite database
+conn.text_factory = str; # necessary to import 8-bit bytestrings - these input files are not unicode
+c = conn.cursor(); # create a cursor object to call its execute method for the connection
+c.execute("attach database 'Geo.db' as 'geo'"); # attach the database alias
+
+for line in imported_file:
+   if line[:1] != '#': # the file has a long header for which each line starts with pound, so we will ignore these
+      columns = line.split('\t') # store the contents of each line as an array of column values
+      columns[18] = columns[18].rstrip('\n') # remove the new line characters from last (19th) column
+      if columns[15].find(',') > 0: # if there is a comma in the field, meaning that it has multiple languages listed
+         columns[15] = columns[15][:columns[15].find(',')] # then only take what’s left of the comma - the primary language
+      if columns[15].find('-') > 0: # if the primary language code then has a second part following a dash
+         columns[15] = columns[15][:columns[15].find('-')] # then get rid of that second part - usually the variation of the language
+      if columns[16] != '': # if the geonameid is populated
+         c.execute('insert into geo.countryinfo values (?,?,?,?,?,?)', [columns[16], columns[0], columns[4], columns[5], columns[11], columns[15]]) # insert the row into the Sqlite table
+
+conn.commit(); # commit all inserts
+conn.close(); # close the Sqlite connection</code></pre>
+		</p><br><br>
+
+
+
+
+		<p class="header2">Language Code to Name Mapping Table:</p>
+		<p>
+			Create the table of Language Names based on Language Code:
+			<pre><code class="code lang-sql">create table geo.languages (
+   Language_Code varchar(10),
+   Language_Name varchar(60)
+);</code></pre>
+		</p><br>
+
+		<p>
+			Insert into the Languages mapping table (Python Script - run from ~/Sqlite):
+			<pre><code class="code lang-python">#!/usr/bin/env python2.7
+
+fin = open('Geo_Imports/iso-languagecodes.txt', "r"); # read in the text file
+imported_file = fin.readlines(); # store the contents of the input file as an array of lines (the lines are just strings, not arrays of field values)
+fin.close(); # end reading the file once our array has been assigned
+
+import sqlite3; # Sqlite python module
+conn = sqlite3.connect('Geo.db'); # establish the connection to the Sqlite database
+conn.text_factory = str; # necessary to import 8-bit bytestrings - these input files are not unicode
+c = conn.cursor(); # create a cursor object to call its execute method for the connection
+c.execute("attach database 'Geo.db' as 'geo'"); # attach the database alias
+
+for line in imported_file:
+   if line[:3] != 'ISO': # ignore the header
+      columns = line.split('\t') # store the contents of each line as an array of column values
+      columns[3] = columns[3].rstrip('\n') # remove the new line characters from last (4th) column
+      if columns[2] != '': # if the language code is populated
+         c.execute('insert into geo.languages values (?,?)', [columns[2], columns[3]]) # insert the row into the Sqlite table
+
+conn.commit(); # commit all inserts
+conn.close(); # close the Sqlite connection</code></pre>
+		</p>
+		<p>
+			Apply a bit of cleanup to the language names:
+			<pre><code class="code lang-sql">update geo.languages set Language_Name = 'Greek' where Language_Name = 'Modern Greek (1453-)';
+update geo.languages set Language_Name = 'Interlingua' where Language_Name = 'Interlingua (International Auxiliary Language Association)';
+update geo.languages set Language_Name = 'Malay' where Language_Name = 'Malay (macrolanguage)';
+update geo.languages set Language_Name = 'Occitan' where Language_Name = 'Occitan (post 1500)';
+update geo.languages set Language_Name = 'Swahili' where Language_Name = 'Swahili (macrolanguage)';
+update geo.languages set Language_Name = 'Tonga' where Language_Name = 'Tonga (Tonga Islands)';</code></pre>
+		</p><br><br>
+
+
+
+
+		<p class="header2">Final Table:</p>
+		<p>
+			Using the SQLite command-line tool, create the structure for the final table, indicating the primary key and null/uniqueness constraints:
+			<pre><code class="code lang-sql">create table geo.globe (
+   Geo_Name_ID integer not null unique primary key,
+   Ascii_Name varchar(200) not null,
+   State varchar(30),
+   Country varchar(50),
+   Latitude decimal(18,6),
+   Longitude decimal(18,6),
+   Population bigint,
+   Capital varchar(50),
+   Currency varchar(20),
+   Primary_Language varchar(60)
+);</code></pre>
+		</p>
+
+		<p>
+			Index the table appropriately for faster querying - important as real-time responses are needed for this project:
+			<pre><code class="code lang-sql">create index GNMID_IDX on globe (Geo_Name_ID);
+create index ASCNM_IDX on globe (Ascii_Name);
+create index ST_IDX on globe (State);
+create index CNTRY_IDX on globe (Country);</code></pre>
+		</p>
+		<p>
+			Verify with:
+			<pre><code class="code lang-sql">.indices globe</code></pre>
+		</p><br>
+
+		<p>
+			Now, populate the table:
+			<pre><code class="code lang-sql">insert into geo.globe
+select A.Geo_Name_ID,
+       A.Ascii_Name,
+       B.State,
+       C1.Country,
+       A.Latitude,
+       A.Longitude,
+       A.Population,
+       C2.Capital,
+       C2.Currency_Name as Currency,
+       D.Language_Name as Primary_Language
+from geo.geography_combined_unique A
+left outer join geo.states B on (A.State_Code = B.State_Code)
+left outer join geo.countryinfo C1 on (A.Country_Code = C1.Country_Code)
+left outer join geo.countryinfo C2 on (A.Geo_Name_ID = C2.Geo_Name_ID)
+left outer join geo.languages D on (C2.Primary_Language_Code = D.Language_Code)
+;</code></pre>
+		</p><br>
+
+		<p>
+			Apply final table cleanup:
+		</p><br>
+		<p>
+			Cleanup country names, which had values like "Kingdom of Spain" instead of Spain. I'm just using the country name as the ascii_name:
+			<pre><code class="code lang-sql">update geo.globe
+set Ascii_Name = Country
+where Capital IS NOT NULL
+and State IS NULL;</code></pre>
+		</p><br>
+
+		<p>
+			Add State Capitals:
+			<pre><code class="code lang-sql">update geo.globe
+set Capital =
+(case state
+   when 'Alaska' then 'Juneau'
+   when 'Alabama' then 'Montgomery'
+   when 'Arkansas' then 'Little Rock'
+   when 'Arizona' then 'Phoenix'
+   when 'California' then 'Sacramento'
+   when 'Colorado' then 'Denver'
+   when 'Connecticut' then 'Hartford'
+   when 'Delaware' then 'Dover'
+   when 'Florida' then 'Tallahassee'
+   when 'Georgia' then 'Atlanta'
+   when 'Hawaii' then 'Honolulu'
+   when 'Iowa' then 'Des Moines'
+   when 'Idaho' then 'Boise'
+   when 'Illinois' then 'Springfield'
+   when 'Indiana' then 'Indianapolis'
+   when 'Kansas' then 'Topeka'
+   when 'Kentucky' then 'Frankfort'
+   when 'Louisiana' then 'Baton Rouge'
+   when 'Massachusetts' then 'Boston'
+   when 'Maryland' then 'Annapolis'
+   when 'Maine' then 'Augusta'
+   when 'Michigan' then 'Lansing'
+   when 'Minnesota' then 'Saint Paul'
+   when 'Missouri' then 'Jefferson City'
+   when 'Mississippi' then 'Jackson'
+   when 'Montana' then 'Helena'
+   when 'North Carolina' then 'Raleigh'
+   when 'North Dakota' then 'Bismarck'
+   when 'Nebraska' then 'Lincoln'
+   when 'New Hampshire' then 'Concord'
+   when 'New Jersey' then 'Trenton'
+   when 'New Mexico' then 'Santa Fe'
+   when 'Nevada' then 'Carson City'
+   when 'New York' then 'Albany'
+   when 'Ohio' then 'Columbus'
+   when 'Oklahoma' then 'Oklahoma City'
+   when 'Oregon' then 'Salem'
+   when 'Pennsylvania' then 'Harrisburg'
+   when 'Rhode Island' then 'Providence'
+   when 'South Carolina' then 'Columbia'
+   when 'South Dakota' then 'Pierre'
+   when 'Tennessee' then 'Nashville'
+   when 'Texas' then 'Austin'
+   when 'Utah' then 'Salt Lake City'
+   when 'Virginia' then 'Richmond'
+   when 'Vermont' then 'Montpelier'
+   when 'Washington' then 'Olympia'
+   when 'Wisconsin' then 'Madison'
+   when 'West Virginia' then 'Charleston'
+   when 'Wyoming' then 'Cheyenne'
+end)
+where country = 'United States'
+and state = ascii_name;</code></pre>
+		</p><br>
+
+		<p>
+			Apply additional cleanup to individual records based on spot checking and manually glancing through the data. Achieving data cleanliness is always a painful process, but will contribute to a better user experience:
+			<pre><code class="code lang-sql">update geo.globe set capital = 'Washington D C' where geo_name_id = 6252001;
+update geo.globe set ascii_name = 'U S Virgin Islands', country = 'U S Virgin Islands' where geo_name_id = 4796775;
+update geo.globe set ascii_name = replace(ascii_name, 'St.', 'Saint') where ascii_name like '%St.%';
+update geo.globe set ascii_name = replace(ascii_name, 'Ste.', 'Saint') where ascii_name like '%Ste.%';
+update geo.globe set ascii_name = 'Washington D C', state = 'Washington D C' where geo_name_id = 4140963;
+update geo.globe set ascii_name = replace(ascii_name, 'Sv.', 'Sveta') where ascii_name like '%Sv.%';
+update geo.globe set ascii_name = replace(ascii_name, 'Slov.', 'Slovenskih') where ascii_name like '%Slov.%';
+update geo.globe set ascii_name = 'Campo Militar Sarabia' where ascii_name = 'C. Militar Sarabia';
+update geo.globe set ascii_name = 'Bosques de las Lomas' where ascii_name = 'Col. Bosques de las Lomas';
+update geo.globe set ascii_name = 'Anacleto Canabal' where ascii_name = 'Anacleto Canabal 2da. Seccion';
+update geo.globe set ascii_name = 'V S K Valasai' where ascii_name = 'V.S.K.Valasai (Dindigul-Dist.)';
+update geo.globe set ascii_name = replace(ascii_name, '.', '') where ascii_name like '%.%';
+delete from geo.globe where ascii_name like '%keruelet%';
+delete from geo.globe where capital is null and population < 15000;
+update geo.globe set ascii_name = replace(ascii_name, 'City of ', '') where ascii_name like '%City of %';
+update geo.globe set ascii_name = replace(ascii_name, 'The Village of ', '') where ascii_name like '%The Village of %';
+update geo.globe set ascii_name = replace(ascii_name, 'Village of ', '') where ascii_name like '%Village of %';
+delete from geo.globe where ascii_name like '%Marseille%' and country = 'France' and ascii_name <> 'Marseille';
+delete from geo.globe where ascii_name like '%Zuerich%' and country = 'Switzerland';
+update geo.globe set ascii_name = 'Ashton-in-Makerfield' where ascii_name = 'Ashton in Makerfield';
+update geo.globe set ascii_name = 'Babor-Ville' where ascii_name = 'BABOR - VILLE';
+update geo.globe set ascii_name = replace(ascii_name, 'Ciudad del ', '') where ascii_name like 'Ciudad del %';
+update geo.globe set ascii_name = replace(ascii_name, 'Ciudad de ', '') where ascii_name like 'Ciudad de %';
+update geo.globe set ascii_name = replace(ascii_name, 'Ciudad ', '') where ascii_name like 'Ciudad %';
+update geo.globe set ascii_name = 'Oliver-Valdefierro' where ascii_name = 'Oliver-Valdefierro, Oliver, Valdefierro';
+update geo.globe set ascii_name = 'Sungho one tong' where ascii_name = 'Sungho 1-tong';
+update geo.globe set ascii_name = 'Delmas Seventy Three' where ascii_name = 'Delmas 73';
+update geo.globe set ascii_name = 'Socorro Mission Number One Colonia' where ascii_name = 'Socorro Mission Number 1 Colonia';
+update geo.globe set ascii_name = 'Stadt Winterthur' where ascii_name = 'Stadt Winterthur (Kreis 1)';
+update geo.globe set ascii_name = 'Seen' where ascii_name = 'Seen (Kreis 3)';
+update geo.globe set ascii_name = 'Oberwinterthur' where ascii_name = 'Oberwinterthur (Kreis 2)';
+update geo.globe set ascii_name = 'Villa del Prado' where ascii_name = 'Villa del Prado 2da Seccion';
+update geo.globe set ascii_name = replace(ascii_name, ' / ', '-') where ascii_name like '% / %';
+update geo.globe set ascii_name = replace(ascii_name, '/', '-') where ascii_name like '%/%';
+update geo.globe set ascii_name = replace(ascii_name, '`', '') where ascii_name like '%`%';
+update geo.globe set ascii_name = 'Kalibo' where ascii_name = 'Kalibo (poblacion)';
+update geo.globe set ascii_name = 'Wetter' where ascii_name = 'Wetter (Ruhr)';
+update geo.globe set ascii_name = 'Schwedt' where ascii_name = 'Schwedt (Oder)';
+update geo.globe set ascii_name = 'Rheinfelden' where ascii_name = 'Rheinfelden (Baden)';
+update geo.globe set ascii_name = 'Muelheim' where ascii_name = 'Muelheim (Ruhr)';
+update geo.globe set ascii_name = 'Kempten' where ascii_name = 'Kempten (Allgaeu)';
+update geo.globe set ascii_name = 'Kelkheim' where ascii_name = 'Kelkheim (Taunus)';
+update geo.globe set ascii_name = 'Halle' where ascii_name = 'Halle (Saale)';
+update geo.globe set ascii_name = 'Frankfurt' where ascii_name = 'Frankfurt (Oder)';
+update geo.globe set ascii_name = 'Brake' where ascii_name = 'Brake (Unterweser)';
+update geo.globe set ascii_name = 'Miguel Aleman' where ascii_name = 'Miguel Aleman (La Doce)';
+update geo.globe set ascii_name = 'Dainava' where ascii_name = 'Dainava (Kaunas)';
+update geo.globe set ascii_name = 'Milford' where ascii_name = 'Milford (balance)';
+update geo.globe set ascii_name = 'Butte-Silver Bow' where ascii_name = 'Butte-Silver Bow (Balance)';
+update geo.globe set ascii_name = 'Jardines de la Silla' where ascii_name = 'Jardines de la Silla (Jardines)';
+update geo.globe set ascii_name = 'Licenciado Benito Juarez' where ascii_name = 'Licenciado Benito Juarez (Campo Gobierno)';
+update geo.globe set ascii_name = 'Ampliacion San Mateo' where ascii_name = 'Ampliacion San Mateo (Colonia Solidaridad)';
+update geo.globe set ascii_name = replace(ascii_name, "'", '') where ascii_name like "%'%";
+update geo.globe set ascii_name = 'Bonaire and Saint Eustatius and Saba', country = 'Bonaire and Saint Eustatius and Saba' where ascii_name = 'Bonaire, Saint Eustatius and Saba ';
+update geo.globe set currency = replace(currency, ' ', '') where currency like '% %' and currency <> 'Yuan Renminbi';
+update geo.globe set currency = null where currency = '';
+update geo.globe set country = 'U S Virgin Islands' where country = 'U.S. Virgin Islands';
+update geo.globe set ascii_name = replace(ascii_name, 'St ', 'Saint ') where ascii_name like 'St %';
+update geo.globe set capital = 'Douglas' where capital = 'Douglas, Isle of Man';
+update geo.globe set capital = 'Nukualofa' where capital = "Nuku'alofa";
+update geo.globe set capital = 'Saint Peter Port' where capital = 'St Peter Port';
+update geo.globe set capital = 'Saint Georges' where capital = "St. George's";
+update geo.globe set capital = 'Saint Johns' where capital = "St. John's";
+update geo.globe set ascii_name = ltrim(rtrim(upper(ascii_name))), state = ltrim(rtrim(upper(state))), country = ltrim(rtrim(upper(country))), capital = ltrim(rtrim(upper(capital))), currency = ltrim(rtrim(upper(currency))), primary_language = ltrim(rtrim(upper(primary_language)));
+update geo.globe set capital = null where capital = '';
+update geo.globe set ascii_name = replace(ascii_name, ' - ', '-') where ascii_name like '% - %';</code></pre>
+		</p><br><br><br><br>
+
+		<a href="/interactive-globe-speech" class="continue_to">&#8680; Continue to Speech Recognition</a><br><br><br><br><br>
+
+	</div>
+
+
+
+		<div id='prefooter'></div>
+	</div>
+
+	<div id='footer'>
+		<div>&copy; Gil Soffer</div>
+	</div>
+
+</body>
+
+<script type="text/javascript" src="/assets/javascript/jquery.min.js"></script><!-- bootstrap requires jquery -->
+<script type="text/javascript" src="/assets/javascript/bootstrap.min.js"></script>
+<script type="text/javascript" src="/assets/javascript/app.js"></script>
+<script type="text/javascript" src="/assets/javascript/highlight.pack.js"></script><!-- i included Bash, SQL, Arduino, and Python - re-download and replace for more languages (don't need to replace default.css) -->
+<script>hljs.initHighlightingOnLoad();</script>
+
+</html>

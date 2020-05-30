@@ -1,0 +1,460 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+	<title>Gil Soffer</title>
+	<link rel="icon" href="/assets/images/favicon.png">
+	<meta charset="utf-8">
+	<meta name="description" content="Gil Soffer: Personal Website">
+	<meta name="author" content="Gil Soffer">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel=stylesheet type=text/css href="/assets/css/app.css">
+	<link rel=stylesheet type=text/css href="/assets/css/default.css"><!-- used by highlight.js (I modified this css to my liking) -->
+</head>
+
+<body>
+
+	<div class="container-fluid">
+
+		<nav id='site-nav'>
+			<div id='site-nav-header'>
+				<a id='site-nav-home' href="/">Gil Soffer</a>
+				<button type="button" id='site-nav-button' data-toggle="collapse" data-target="#site-nav-links">
+					<span class="site-nav-button-bar"></span>
+					<span class="site-nav-button-bar"></span>
+					<span class="site-nav-button-bar"></span>
+				</button>
+			</div>
+			<div id='site-nav-links' class="collapse">
+				<ul>
+					<li><a href="/web-development">Web Development</a></li>
+					<li><a href="/electronics">Electronics</a></li>
+					<li><a href="https://github.com/gsoffer" target="_blank" class="external">GitHub</a></li>
+					<li><a href="https://www.linkedin.com/in/gil-soffer" target="_blank" class="external">LinkedIn</a></li>
+					<li><a href="mailto:gsoffer2@gmail.com" class="external">Contact</a></li>
+				</ul>
+			</div>
+		</nav>
+
+		
+	<div id='project-title'>Interactive Globe</div>
+	<div id='project-hr'></div><br class='project-br'>
+	<div id='project-nav-button'>
+		<button id='project-nav-button-show' onclick="projectNavShow()">Sections &ensp; +</button>
+		<button id='project-nav-button-hide' onclick="projectNavHide()">Sections &ensp; &ndash;</button>
+	</div>
+	<div id='project-nav' class="project-nav-hide">
+		<a href="/interactive-globe">Overview</a><br class='project-br'><br class='project-br'>
+		<a href="/interactive-globe-sqlite">SQLite</a><br class='project-br'><br class='project-br'>
+		<a href="/interactive-globe-speech">Speech</a><br class='project-br'><br class='project-br'>
+		<a href="/interactive-globe-hardware">Hardware</a><br class='project-br'><br class='project-br'>
+		<a href="/interactive-globe-python">Python</a>
+	</div>
+
+	
+	<div id='content'>
+
+		<p class='header1'>Speech Recognition</p>
+
+
+
+
+		<p class="header2">Overview:</p>
+		<p>
+			In interacting with the globe, a person speaks the name of a country, state, or city, as audio input, which the Raspberry Pi interprets as a specific geographic location. And that can then be used to point to the location on the globe and read aloud the corresponding demographic information. The steps below explain how speech-to-text is used in this application.
+		</p><br><br>
+
+
+
+
+		<p class="header2">How Speech Recognition Works:</p>
+		<p>
+			For this project, CMU's Pocketsphinx is used as the speech-to-text engine because it is an extremely accurate tool for real-time applications, and can be leveraged easily in Python, which is perfect on the Raspberry Pi. There are three main components to developing a speech recognition system:
+		</p>
+		<p>
+			<b>1. The Acoustic Model</b><br>
+			This can be trained to better match an individual's voice / manner of speaking. For this project, the acoustic model was not modified, and for most applications can probably be left alone.
+		</p>
+		<p>
+			<b>2. The Dictionary File</b><br>
+			This maps words to their phoneme breakdowns. For example, the word "CHOICE" maps to these three phonemes: "CH" "OY" "S". For this project, a dictionary file for the names of all cities, states, and countries needs to be generated.
+		</p>
+		<p>
+			<b>3. The Language Model / Grammar File</b><br>
+			These attempt to capture the context in which words are used together. One can either use a language model or a grammar file to define the speech context. Both cannot be used together.
+		</p>
+		<p>
+			A language model indicates the probabilities of sequences of consecutive words. For example, when in doubt, the speech decoder should lean toward guessing "NEW YORK" as opposed to "NEW FORK". A "corpus" file is used to train the language model, and includes sentences that demonstrate proper word association. A properly generated corpus file would lead the language model to understand that there is a more probable occurrence of NEW YORK. Language models are used when there is more flexibility to the speech spoken.
+		</p>
+		<p>
+			A grammar file, on the other hand, is more structured, expecting the words to be spoken in a precise order. It will not guess word combinations that don't match the context rules laid out in the grammar file. For this project, using a grammar file makes more sense, as we would like to eliminate any chance of invalid interpretations, such as "Austin Massachusetts" or "Boston Texas". I want to point out that a properly trained language model should still do a good job of eliminating this, because there should be a higher probability of word association between Austin and Texas, and similarly between Boston and Massachusetts. However, having already experimented with language models for this project, I've learned that grammar files produce much better results, as false insertions of words such as "a" in the interpreted results ("NEW A YORK") are no longer an issue. These minor variations in the interpretations of speech can make it a nightmare to identify the true geographic location intended when querying the SQLite database. The language model does produce faster guesses though for a larger lexicon.
+		</p><br><br>
+
+
+
+
+		<p class="header2">The Challenges of a Large Lexicon:</p>
+		<p>
+			Grammar files are optimal over language models for applications for which the usage is very structured, and for applications that have a sufficiently small word lexicon as alluded to above, such as basic command or voice response systems. This project does have an extremely structured usage. However, this project poses a challenge in that the lexicon size (over 40K words) is too large for a simple grammar file format, while still maintaining acceptable accuracy and/or speed.
+		</p>
+		<p>
+			Based on experimentation throughout this project, in using a grammar file for a sufficiently large word lexicon with extremely structured usage, the following conclusions could be drawn:
+		</p>
+		<p>
+			1. Having too many public rules in a grammar file often leads to poor accuracy, even though it is processed quickly, because Pocketsphinx often does a horrible job of selecting the correct rule. If it selects the correct rule, it does a good job of choosing the correct answer, but even when the rules are moderately similar, it will choose the wrong one. Public rules must be extremely different for correct speech recognition. Therefore, when dealing with a large lexicon, where you may be tempted to include hundreds of similarly structured public rules in the grammar file, to be completely safe, DO NOT INCLUDE MORE THAN ONE PUBLIC RULE PER GRAMMAR FILE. You can include as many private rules as you want, that are referenced by the public rule, but this can also lead to challenges as (2) explains below.
+		</p>
+		<p>
+			2. Including too many options and private rules separated by pipes in a given public rule causes processing to take an extremely long time, even though it might be relatively accurate, as tries its best to take into account every possibility. It is much too slow to be used in a real-time application such as this project.
+		</p>
+		<p>
+			3. The best solution is to hierarchize the dialogue with the globe where possible to reduce the number of possibilities and processing time for any specific question. For this project, this means first asking for a country and then asking for a city / state. This way, interpreting results for the first question only requires taking into consideration the country names, and then interpreting results for the second question only requires taking into consideration the city names for that specified country.
+		</p>
+		<p>
+			The solution outlined in (3) above is used effectively for this project. Separate grammar files are created, each with one public rule. For example, one grammar file only recognizes all cities in New York, and another grammar file only recognizes all cities in Spain. Breaking it out this way produces 268 grammar files, each of which is processed separately as needed. Individual dictionary files are created as well for smaller decoder sizes. By creating distinct grammar and dictionary files, the main globe Python application dynamically changes the speech recognition decoder on the fly, and responds accurately in real-time.
+		</p><br><br>
+
+
+
+
+		<p class="header2">Step 1 - Generate the Corpus File:</p>
+		<p>
+			When using a language model, it makes sense not just to have all city names in the corpus, but to also have all combinations of cities and states, and all combinations of cities and countries (other than the US), so that the context can be determined. Grammar files will be used instead, so this is no longer necessary, but we will include all of these combinations in the corpus file since it doesn't hurt (it was only there to begin with because I was originally using a language model). For this application, the corpus is really only used to generate the dictionary file, which is just the unique list of words mapping to their phoneme breakdowns, and is irrespective of word association.<br>
+		</p><br>
+
+		<p>
+			Generate the corpus file, by pulling all location names from the SQLite database we have created (Python Script - run from ~/Sqlite):
+			<pre><code class="code lang-python">#!/usr/bin/env python2.7
+
+import sqlite3; # SQLite python module
+conn = sqlite3.connect('Geo.db'); # establish the connection to the Sqlite database
+conn.text_factory = str; # necessary to import 8-bit bytestrings - these input files are not unicode
+c = conn.cursor(); # create a cursor object to call its execute method for the connection
+c.execute("attach database 'Geo.db' as 'geo'"); # attach the database alias
+
+fout = open('/Users/gilsoffer/Desktop/corpus.txt', "w"); # write to the corpus file
+
+# Need these words in dictionary to be understood by grammar file, so adding to corpus (this wouldn't be much use added this way if used with LM since it doesn't really give good context for how these words are used):
+fout.write("&lt;s> WHICH OTHER COUNTRY CITY STATE IN WOULD YOU LIKE TO SEE &lt;/s>\n");
+fout.write("&lt;s> YOUR CHOICE &lt;/s>\n");
+fout.write("&lt;s> LETS PICK CHOOSE A ANOTHER DIFFERENT &lt;/s>\n");
+fout.write("&lt;s> THE &lt;/s>\n");
+
+# Note: Iterating over the array directly produced by sqlite gets buggy - list() is used to copy the contents into a conventional python array
+all_locations = list(c.execute('select distinct ascii_name from geo.globe order by ascii_name'));
+for row in all_locations:
+   fout.write('&lt;s> ' + row[0] + " &lt;/s>\n") # write the location name to the corpus
+
+us_city_states = list(c.execute("select distinct ascii_name, state from geo.globe where country = 'UNITED STATES' and capital is null and ascii_name <> 'WASHINGTON D C' order by ascii_name, state"));
+for row in us_city_states:
+   fout.write('&lt;s> ' + row[0] + ' ' + row[1] + " &lt;/s>\n") # write the use city and state combo to the corpus
+
+nonus_city_countries = list(c.execute("select distinct ascii_name, country from geo.globe where country <> 'UNITED STATES' and capital is null order by ascii_name, country"));
+for row in nonus_city_countries:
+   fout.write('&lt;s> ' + row[0] + ' ' + row[1] + " &lt;/s>\n") # write the city and country combo to the corpus
+
+fout.close(); # close the corpus file
+conn.close(); # close the Sqlite connection</code></pre>
+		</p><br><br>
+
+
+
+
+		<p class="header2">Step 2 - Generate the Dictionary File:</p>
+		<p>
+			 First generate the vocab file (the unique list of words from the corpus file). This is done using a handy function included in the Pocketsphinx installation (run from the terminal):<br>
+			 <pre><code class="code lang-bash">text2wfreq < ~/Desktop/corpus.txt | wfreq2vocab -top 1000000 > ~/Desktop/corpus.vocab;</code></pre>
+		</p><br>
+
+		<p>
+			This vocab file is then used to generate the dictionary file, which will add the phoneme mappings for this unique set of words. The online LM Tool website (http://www.speech.cs.cmu.edu/tools/lmtool.html) is used to obtain the dictionary. This site looks up the words against the complete CMU Dictionary, and estimates the pronunciations when not found.
+		</p>
+		<p>
+			The only issue is that this online tool only accepts up to 6000 word files, and our corpus contains much more than that. To get around this issue, I wrote the following Python script to split the corpus into smaller files, submit each individually, download the corresponding dictionary files, and combine then into one. This code splits the vocab file into 5000-line smaller files (the vocab file only has 1 word per line), as many files as are necessary based on the corpus passed to it. They words will already be in alphabetical order since the vocab file passed to it is already in alphabetical order. Header rows and sentence context markers are also ignored before submitting the first file:
+		</p><br>
+
+		<p>
+			Generate the dictionary file (Python Script - run from ~/Sqlite):
+			<pre><code class="code lang-python">#!/usr/bin/env python2.7
+
+import shutil
+import mechanize
+
+# Produce 5000 word sub-files from vocab (since 6000 word limit)
+fin = open('corpus.vocab', "r");
+vocab = fin.readlines();
+fin.close();
+
+file_count = 1; # used to keep track of how many files have been split
+line_count = 1; # used to compare against the 5000 row limit
+
+fout = open('vocab_split_' + str(file_count) + '.txt', "w");
+
+for line in vocab:
+   if (line not in ["&lt;s>\n", "&lt;/s>\n"] and line[:2] != '##'): # exclude the header rows
+      fout.write(line)
+      line_count += 1
+   if ((line_count != 1) and (line_count % 5000) == 1): # when 5000 lines have been written
+      fout.close() # close the sub-vocab file
+      file_count += 1 # increment the file counter
+      fout = open('vocab_split_' + str(file_count) + '.txt', "w"); # open the next sub-vocab file
+
+fout.close();
+
+# Browser
+br = mechanize.Browser();
+
+# Browser Options
+br.set_handle_equiv(True);
+br.set_handle_gzip(True);
+br.set_handle_redirect(True);
+br.set_handle_referer(True);
+br.set_handle_robots(False);
+
+# Follows refresh 0 but does not hang on refresh > 0
+br.set_handle_refresh(mechanize._http.HTTPRefreshProcessor(), max_time=1);
+
+# Set Debugging Messages
+br.set_debug_http(True);
+br.set_debug_redirects(True);
+br.set_debug_responses(True);
+
+# User-Agent
+br.addheaders = [('User-agent', 'Firefox')];
+
+# URL to Dictionary Generation Webtool
+url = "http://www.speech.cs.cmu.edu/tools/lmtool-new.html";
+
+# Submit each sub-vocab file to the site individually and download the sub-dictionary files
+# Also append each sub-dictionary file to the final compiles dictionary file
+fout = open('corpus.dic', "w");
+for x in range(1, (file_count + 1)):
+   sub_vocab = 'vocab_split_' + str(x) + '.txt'
+   br.open(url)
+   br.select_form(nr=0) # there is only one form, so select the first one
+   br.form.add_file(open(sub_vocab), 'text/plain', sub_vocab)
+   br.submit()
+   for link in br.links():
+      if link.url[-4:] == '.dic': # we only care about the dictionary file generated
+         dict_location = br.retrieve(link.base_url + link.url)[0] # download and keep note of location
+         sub_dict = 'sub_dict_' + str(x) + '.dic'
+         shutil.copyfile(dict_location, sub_dict) # copy and rename the sub-dictionary file
+         fin = open(sub_dict, 'r') # read in the sub-dictionary file
+         fout.write(fin.read()) # write the sub-dictionary file to the main combined file
+         fin.close() # close the sub-dictionary file
+
+fout.close(); # close the final combined dictionary file</code></pre>
+		</p><br><br>
+
+
+
+
+		<p class="header2">Step 3 - Generate the Grammar and Lookup Files:</p>
+		<p>
+			The globe is interacted with in a hierarchical question format. First, it asks for a country. If that country is the United States, then it asks for a state. Once provided a state, it asks for a city. If not given the United States, it asks for a city in that country. We need a speech decoder for each of these situations. But we also need lookup files, one that indicates which grammar and dictionary files to use once a specific country (except for the US) has been specified, and one that indicates which grammar and dictionary files to use once a specific state has been specified. And two additional pairs of grammar/dictionary files are needed as well - one that interprets the country spoken and one that interprets the state spoken. The following code generates all of these individual grammar files, and the two lookup files.
+		</p><br>
+
+		<p>
+			First, in a terminal, create a folder for the generated files to be placed:
+			<pre><code class="code lang-bash">mkdir ~/Desktop/Split Grammar Files;</code></pre>
+		</p><br>
+
+		<p>
+			Generate the grammar and lookup files (Python Script - run from ~/Sqlite):
+			<pre><code class="code lang-python">#!/usr/bin/env python2.7
+
+import sqlite3; # Sqlite python module
+conn = sqlite3.connect('Geo.db'); # establish the connection to the Sqlite database
+conn.text_factory = str; # necessary to import 8-bit bytestrings - these input files are not unicode
+c = conn.cursor(); # create a cursor object to call its execute method for the connection
+c.execute("attach database 'Geo.db' as 'geo'"); # attach the database alias
+
+# All countries that can also be spoken with the word "the" preceding:
+pluralcountries = ["ALAND ISLANDS", "BAHAMAS", "BRITISH VIRGIN ISLANDS", "CAYMAN ISLANDS", "COCOS ISLANDS", "COOK ISLANDS", "FALKLAND ISLANDS", "FAROE ISLANDS", "FRENCH SOUTHERN TERRITORIES", "HEARD ISLAND AND MCDONALD ISLANDS", "MARSHALL ISLANDS", "NETHERLANDS", "NORTHERN MARIANA ISLANDS", "PHILIPPINES", "SOLOMON ISLANDS", "SOUTH GEORGIA AND THE SOUTH SANDWICH ISLANDS", "TURKS AND CAICOS ISLANDS", "U S VIRGIN ISLANDS", "UNITED ARAB EMIRATES", "UNITED KINGDOM", "UNITED STATES", "UNITED STATES MINOR OUTLYING ISLANDS"];
+
+# Create the grammar file for all possible countries
+grammarfilepath = "/Users/gilsoffer/Desktop/Split Grammar Files/countries.gram";
+grammarfout = open(grammarfilepath, "w");
+grammarfout.write("#JSGF V1.0;\n\n");
+grammarfout.write("/**\n");
+grammarfout.write(" * JSGF Grammar for Globe\n");
+grammarfout.write(" */\n\n");
+grammarfout.write("grammar countries;\n\n");
+
+# Note: Iterating over the array directly produced by sqlite gets buggy - list() is used to copy the contents into a conventional python array
+countries = list(c.execute("select distinct country from geo.globe where country is not null order by country"));
+grammarfout.write("public <countries> = (");
+for country in countries:
+   countryname = country[0]
+   if country[0] in pluralcountries:
+      countryname = "[THE] " + country[0]
+   grammarfout.write(countryname + " | ") # write the country name to the grammar file
+
+grammarfout.write("YOUR CHOICE);\n"); # also allow the user to let the globe choose
+grammarfout.close();
+
+
+#create the grammar file for all possible states
+grammarfilepath = "/Users/gilsoffer/Desktop/Split Grammar Files/states.gram";
+grammarfout = open(grammarfilepath, "w");
+grammarfout.write("#JSGF V1.0;\n\n");
+grammarfout.write("/**\n");
+grammarfout.write(" * JSGF Grammar for Globe\n");
+grammarfout.write(" */\n\n");
+grammarfout.write("grammar states;\n\n");
+
+states = list(c.execute("select distinct state from geo.globe where state is not null order by state"));
+grammarfout.write("public <states> = (");
+for state in states:
+   grammarfout.write(state[0] + " | ") #write the state name to the grammar file
+
+grammarfout.write("YOUR CHOICE | LETS (PICK | CHOOSE | SEE) (A | ANOTHER | A DIFFERENT) COUNTRY);\n");
+grammarfout.close();
+
+
+# Create the lookup file that maps to the individual grammar and dictionary files for a specific country
+countrylookuppath = "/Users/gilsoffer/Desktop/Split Grammar Files/countrylookup.txt";
+countrylookupfout = open(countrylookuppath, "w");
+countryfilecount = 0;
+countries = list(c.execute("select distinct country from geo.globe where country <> 'UNITED STATES' and capital is null order by country"));
+non_us_cities = list(c.execute("select distinct ascii_name, country from geo.globe where country <> 'UNITED STATES' and capital is null order by country, ascii_name"));
+for country in countries:
+   countryfilecount += 1
+   # Append to country lookup file
+   countrylookupfout.write(country[0] + "\t" + str(countryfilecount) + "\n")
+   if country[0] in pluralcountries:
+      countrylookupfout.write("THE " + country[0] + "\t" + str(countryfilecount) + "\n")
+   # Create grammar file for country
+   grammarfilepath = "/Users/gilsoffer/Desktop/Split Grammar Files/country.gram" + str(countryfilecount)
+   grammarfout = open(grammarfilepath, "w")
+   grammarfout.write("#JSGF V1.0;\n\n")
+   grammarfout.write("/**\n")
+   grammarfout.write(" * JSGF Grammar for Globe\n")
+   grammarfout.write(" */\n\n")
+   grammarfout.write("grammar country;\n\n")
+   grammarfout.write("public <country> = (")
+   for city in non_us_cities:
+      if city[1] == country[0]:
+         grammarfout.write(city[0] + " | ")
+   grammarfout.write("YOUR CHOICE | LETS (PICK | CHOOSE | SEE) (A | ANOTHER | A DIFFERENT) COUNTRY);\n");
+   grammarfout.close()
+
+countrylookupfout.close();
+
+
+# Create the lookup file that maps to the individual grammar and dictionary files for a specific country
+statelookuppath = "/Users/gilsoffer/Desktop/Split Grammar Files/statelookup.txt";
+statelookupfout = open(statelookuppath, "w");
+statefilecount = 0;
+states = list(c.execute("select distinct state from geo.globe where state is not null and state <> 'WASHINGTON D C' order by state"));
+us_cities = list(c.execute("select distinct ascii_name, state from geo.globe where country = 'UNITED STATES' and capital is null and state is not null order by state, ascii_name"));
+for state in states:
+   statefilecount += 1
+   # Append to state lookup file
+   statelookupfout.write(state[0] + "\t" + str(statefilecount) + "\n")
+   # Create grammar file for country
+   grammarfilepath = "/Users/gilsoffer/Desktop/Split Grammar Files/state.gram" + str(statefilecount)
+   grammarfout = open(grammarfilepath, "w")
+   grammarfout.write("#JSGF V1.0;\n\n")
+   grammarfout.write("/**\n")
+   grammarfout.write(" * JSGF Grammar for Globe\n")
+   grammarfout.write(" */\n\n")
+   grammarfout.write("grammar state;\n\n")
+   grammarfout.write("public <state> = (")
+   for city in us_cities:
+      if city[1] == state[0]:
+         grammarfout.write(city[0] + " | ")
+   grammarfout.write("YOUR CHOICE | LETS (PICK | CHOOSE | SEE) (A | ANOTHER | A DIFFERENT) STATE | LETS (PICK | CHOOSE | SEE) (A | ANOTHER | A DIFFERENT) COUNTRY);\n");
+   grammarfout.close()
+
+statelookupfout.close();
+conn.close(); # close the Sqlite connection</code></pre>
+		</p><br><br>
+
+
+
+
+		<p class="header2">Step 4 - Split the Dictionary Files:</p>
+		<p>
+			​It isn't completely necessary to create individualized dictionary files, since the complete dictionary generated has all of the possible words spoken, but doing so reduces the decoder size and processing time.
+		</p><br>
+
+		<p>
+			Split the dictionary files, one for each grammar file (Python Script - run from ~/Sqlite):
+			<pre><code class="code lang-python">#!/usr/bin/env python2.7
+
+import os;
+
+# Path to lexicon dictionary
+dictionaryfilepath = "/Users/gilsoffer/Desktop/corpus.dic";
+
+# Read in the complete dictionary
+fin = open(dictionaryfilepath, "r");
+dictionary = fin.readlines();
+fin.close();
+
+# Store the dictionary phoneme mapping in an array, and create additional lookup field to allow for words with multiple phoneme mappings
+dictionarylookup = [];
+for line in dictionary:
+   columns = line.split('\t') # store the contents of each line as an array of column values
+   if "(" in columns[0]:
+      stringforlookup = columns[0][:columns[0].find("(")]
+   else:
+      stringforlookup = columns[0]
+   dictionarylookup.append([stringforlookup, columns[0], columns[1].rstrip("\n")])
+
+
+# Path to folder with all grammar files
+grammarsplitdir = "/Users/gilsoffer/Desktop/Split Grammar Files";
+
+# Store all of the grammar file names in an array
+grammarsplitfilesall = os.listdir(grammarsplitdir);
+
+# Remove files from the array that are not grammar files
+grammarsplitfiles = [];
+for filename in grammarsplitfilesall:
+   if ".gram" in filename:
+      grammarsplitfiles.append(filename)
+
+# For each word in the grammar file, lookup in the complete dictionary and write to the sub-dictionary file
+for grammarfile in grammarsplitfiles:
+   grammarfilepath = grammarsplitdir + '/' + grammarfile
+   fin = open(grammarfilepath, "r")
+   grammarfilecontents = fin.readlines()
+   fin.close()
+   for line in grammarfilecontents:
+      if "> =" in line:
+         cleansentence = line[(line.find("=") + 1):].replace(";", '').replace("(", '').replace(")", '').replace("[", '').replace("]", '').lstrip(' ').rstrip("\n").rstrip(' ')
+         words = list(set(cleansentence.split(" ")))
+         words.sort()
+   dictfilepath = grammarfilepath.replace(".gram", ".dic")
+   fout = open(dictfilepath, "w")
+   for word in words:
+      for phonememapping in dictionarylookup:
+         if word == phonememapping[0]:
+            fout.write(phonememapping[1] + "\t" + phonememapping[2] + "\n")
+   fout.close()</code></pre>
+		</p><br><br><br><br>
+
+		<a href="/interactive-globe-hardware" class="continue_to">&#8680; Continue to Hardware</a><br><br><br><br><br>
+
+	</div>
+
+
+
+		<div id='prefooter'></div>
+	</div>
+
+	<div id='footer'>
+		<div>&copy; Gil Soffer</div>
+	</div>
+
+</body>
+
+<script type="text/javascript" src="/assets/javascript/jquery.min.js"></script><!-- bootstrap requires jquery -->
+<script type="text/javascript" src="/assets/javascript/bootstrap.min.js"></script>
+<script type="text/javascript" src="/assets/javascript/app.js"></script>
+<script type="text/javascript" src="/assets/javascript/highlight.pack.js"></script><!-- i included Bash, SQL, Arduino, and Python - re-download and replace for more languages (don't need to replace default.css) -->
+<script>hljs.initHighlightingOnLoad();</script>
+
+</html>

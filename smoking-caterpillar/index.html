@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+	<title>Gil Soffer</title>
+	<link rel="icon" href="/assets/images/favicon.png">
+	<meta charset="utf-8">
+	<meta name="description" content="Gil Soffer: Personal Website">
+	<meta name="author" content="Gil Soffer">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel=stylesheet type=text/css href="/assets/css/app.css">
+	<link rel=stylesheet type=text/css href="/assets/css/default.css"><!-- used by highlight.js (I modified this css to my liking) -->
+</head>
+
+<body>
+
+	<div class="container-fluid">
+
+		<nav id='site-nav'>
+			<div id='site-nav-header'>
+				<a id='site-nav-home' href="/">Gil Soffer</a>
+				<button type="button" id='site-nav-button' data-toggle="collapse" data-target="#site-nav-links">
+					<span class="site-nav-button-bar"></span>
+					<span class="site-nav-button-bar"></span>
+					<span class="site-nav-button-bar"></span>
+				</button>
+			</div>
+			<div id='site-nav-links' class="collapse">
+				<ul>
+					<li><a href="/web-development">Web Development</a></li>
+					<li><a href="/electronics">Electronics</a></li>
+					<li><a href="https://github.com/gsoffer" target="_blank" class="external">GitHub</a></li>
+					<li><a href="https://www.linkedin.com/in/gil-soffer" target="_blank" class="external">LinkedIn</a></li>
+					<li><a href="mailto:gsoffer2@gmail.com" class="external">Contact</a></li>
+				</ul>
+			</div>
+		</nav>
+
+		
+	<div id='project-title'>Smoking Caterpillar</div>
+	<div id='project-hr'></div><br class='project-br'>
+	<div id='project-nav-button'>
+		<button id='project-nav-button-show' onclick="projectNavShow()">Sections &ensp; +</button>
+		<button id='project-nav-button-hide' onclick="projectNavHide()">Sections &ensp; &ndash;</button>
+	</div>
+	<div id='project-nav' class="project-nav-hide">
+		<a href="/smoking-caterpillar">Overview</a><br class='project-br'><br class='project-br'>
+		<a href="/smoking-caterpillar-speech">Speech</a><br class='project-br'><br class='project-br'>
+		<a href="/smoking-caterpillar-hardware">Hardware</a><br class='project-br'><br class='project-br'>
+		<a href="/smoking-caterpillar-python">Python</a>
+	</div>
+
+	
+	<div id='content'>
+
+		<p class='header1'>Overview</p>
+		<p>
+			<b>Become Alice in Wonderland's Smoking Caterpillar, and animate your words using the Raspberry Pi</b><br><br>
+			In Disney's "Alice in Wonderland" (1951), as the Smoking Caterpillar smokes from his hookah, the words he speaks take life in the form of smoke, shaped as letters and objects. In this project, a microphone is attached to the end of a hookah hose. When specific words or phrases (those spoken in the film) are spoken, the LED matrix displays corresponding colorful animations. This project uses a Raspberry Pi, which performs the speech recognition using Carnegie Mellon University's open source "pocketsphinx" software. This project is programmed in Python, and bitmaps are drawn using the ImageDraw module. Each animation is created by displaying a bitmap for a short amount of time, then redrawing a part of the bitmap, and flashing the new, slightly modified, bitmap to the matrix. Redrawing bitmaps this way is used to produce smooth and complex animations on the matrix. The Adafruit Pi LED Matrix Hat is used to flash the bitmaps to the 32x64 LED matrix. This project was extremely fun to work on because I had complete creative freedom in coming up with the animations. And it was similarly an exciting challenge to come up with clever and efficient ways to program these animations once I decided on them. As opposed to contemplating what sorts of motions would be possible / easy to program and then choosing animations based on this, the approach I took was to leave my imagination unrestricted and choose animations that I felt were comical, peculiar, or hypnotic, which was a rewarding, challenging, and educational process.</p><br>
+
+		<p class='header1'>Videos</p>
+		<p>A clip from the original film can be seen here: <a href="https://www.youtube.com/watch?v=41KMByxE6lo" target="_blank">Disney Smoking Caterpillar Clip</a></p><br>
+		<div class='div-iframe'>
+			<iframe src="https://www.youtube.com/embed/uJjdi3HADZ8" frameborder="0" allowfullscreen></iframe>
+		</div><br><br>
+		<div class='div-iframe'>
+			<iframe src="https://www.youtube.com/embed/pTvHnbDjSZs" frameborder="0" allowfullscreen></iframe>
+		</div><br><br>
+		<div class='div-iframe'>
+		<iframe src="https://www.youtube.com/embed/gXJpXa1vcc4" frameborder="0" allowfullscreen></iframe>
+		</div><br><br><br>
+
+		<p class='header1'>Creation</p>
+		<div class="slideshow">
+						<img class="slideshow_images" src="/assets/images/Caterpillar_1.jpg">
+						<img class="slideshow_images" src="/assets/images/Caterpillar_2.jpg">
+						<img class="slideshow_images" src="/assets/images/Caterpillar_3.jpg">
+						<img class="slideshow_images" src="/assets/images/Caterpillar_4.jpg">
+						<img class="slideshow_images" src="/assets/images/Caterpillar_5.jpg">
+						<img class="slideshow_images" src="/assets/images/Caterpillar_6.jpg">
+						<img class="slideshow_images" src="/assets/images/Caterpillar_7.jpg">
+						<img class="slideshow_images" src="/assets/images/Caterpillar_8.jpg">
+						<img class="slideshow_images" src="/assets/images/Caterpillar_9.jpg">
+						<img class="slideshow_images" src="/assets/images/Caterpillar_10.jpg">
+						<a class="slideshow_buttons" style="left:0;" onclick="changeImage(-1)">&#10094;</a>
+			<a class="slideshow_buttons" style="right:0;" onclick="changeImage(1)">&#10095;</a>
+		</div><br><br><br><br><br>
+
+		<a href="/smoking-caterpillar-speech" class="continue_to">&#8680; Continue to Speech Recognition</a><br><br><br><br><br>
+
+	</div>
+
+
+
+		<div id='prefooter'></div>
+	</div>
+
+	<div id='footer'>
+		<div>&copy; Gil Soffer</div>
+	</div>
+
+</body>
+
+<script type="text/javascript" src="/assets/javascript/jquery.min.js"></script><!-- bootstrap requires jquery -->
+<script type="text/javascript" src="/assets/javascript/bootstrap.min.js"></script>
+<script type="text/javascript" src="/assets/javascript/app.js"></script>
+<script type="text/javascript" src="/assets/javascript/highlight.pack.js"></script><!-- i included Bash, SQL, Arduino, and Python - re-download and replace for more languages (don't need to replace default.css) -->
+<script>hljs.initHighlightingOnLoad();</script>
+
+</html>

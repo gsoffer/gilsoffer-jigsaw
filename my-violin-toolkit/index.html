@@ -1,0 +1,392 @@
+<!DOCTYPE HTML>
+<html lang="en">
+
+<head>
+	<title>My Violin Toolkit</title>
+	<link rel="icon" href="/assets/images/favicon_myviolintoolkit.png">
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="description" content="My Violin Toolkit: Web Tools for Violin">
+	<meta name="keywords" content="violin, tool, toolkit, key, signature, staff, note, chart, exercise, exerciser, sheet, music, practice, game, microphone, audio, play, playing, learn, learning, fingering, bow, bowing, string, tuner, metronome, interactive, fingerboard, my violin toolkit, violin web tools, violin tuner, online violin tuner, violin tuner online, violin tuner online with mic, online violin tuner with mic, violin metronome, online metronome, metronome online, violin exercises, violin exercises online, violin exercises online with mic, violin exerciser, violin resources, violin references, violin help, violin learning, violin learning with mic, violin fingerboard, violin fingerboard chart, interactive violin, digital violin, online violin, full violin fingerboard chart">
+	<meta name="author" content="Gil Soffer">
+	<link rel="stylesheet" type="text/css" href="/assets/css/JosefinSans.min.css">
+	<link rel="stylesheet" type="text/css" href="/assets/css/myviolintoolkit.min.css">
+</head>
+
+<body>
+	<div id="site_body">
+
+		<div id="site_header">
+			<div>My Violin Toolkit</div>
+		</div>
+
+		<div id="typed">
+			<h1><br><span id="typed_content"></span><br><br></h1>
+		</div>
+
+		<h2>Web Tools</h2>
+
+		<div id="audio_error_message"><!-- Audio Input Error (if any) --></div>
+
+		<div class="panel_header"><div>Fingering Exerciser</div></div>
+		<div class="panel">
+			<div class="tool">
+	  		<div class="instructions">
+	  			Choose a key signature and hit "Begin!". Play the note shown. When the app hears that you've played it correctly, a new note will be shown.
+	  		</div><br>
+	  		<div id="key_selection">
+	  			Key Signature:
+	  			<select id="key">
+	  				<option value="c-major">C Major / A Minor</option>
+	  				<option value="g-major">G Major / E Minor</option>
+	  				<option value="d-major">D Major / B Minor</option>
+	  				<option value="a-major">A Major / F&#9839; Minor</option>
+	  				<option value="e-major">E Major / C&#9839; Minor</option>
+	  				<option value="b-major">B Major / G&#9839; Minor</option>
+	  				<option value="f-sharp-major">F&#9839; Major / D&#9839; Minor</option>
+	  				<option value="c-sharp-major">C&#9839; Major / A&#9839; Minor</option>
+	  				<option value="f-major">F Major / D Minor</option>
+	  				<option value="b-flat-major">B&#9837; Major / G Minor</option>
+	  				<option value="e-flat-major">E&#9837; Major / C Minor</option>
+	  				<option value="a-flat-major">A&#9837; Major / F Minor</option>
+	  				<option value="d-flat-major">D&#9837; Major / B&#9837; Minor</option>
+	  				<option value="g-flat-major">G&#9837; Major / E&#9837; Minor</option>
+	  				<option value="c-flat-major">C&#9837; Major / A&#9837; Minor</option>
+	  			</select><br>
+					<span class="note">
+						Key Signature Charts:
+						<a target="_blank" href="https://www.the-music-store.com/images/Violin_FingerPattern_Sharps.pdf">Sharps</a> /
+						<a target="_blank" href="https://www.the-music-store.com/images/Violin_FingerPattern_Flats.pdf">Flats</a>
+					</span>
+	  		</div>
+	  		<canvas id="fingering_sheet" width="200" height="300"></canvas><br>
+	  		<div id="fingering_note">Your Note: <b>?</b></div><br>
+				<button id="fingering_button">Begin!</button>
+			</div>
+		</div>
+
+		<div class="panel_header"><div>Steady Bowing Exerciser</div></div>
+		<div class="panel">
+			<div class="tool">
+				<div class="instructions">
+	  			Hit "Begin!", and play a note for 5 seconds. The app will tell you how many times your pitch changed in that time, as an indication of your shakiness. A new note or attempt will be automatically detected as long as you wait a second in between.
+	  		</div><br>
+				Note: <span id="steadybowing_note"><b>?</b></span><br>
+				Times Off Pitch: <span id="steadybowing_times_off_pitch"><b>?</b></span><br>
+				Avg Dur. Off Pitch: <span id="steadybowing_avg_dur_off"><b>?</b></span><br>
+				Total Duration: <span id="steadybowing_duration"><b>?</b></span><br>
+				Status: <span id="steadybowing_status"><b>?</b></span><br><br>
+				<button id="steadybowing_button">Begin!</button>
+			</div>
+		</div>
+
+		<div class="panel_header"><div>Tuner</div></div>
+		<div class="panel">
+			<div class="tool">
+				<div class="instructions">
+	  			Hit "Begin!", and play each string, while tuning to match the target note.<br>
+					<span class="note">"Your Note" is actually the note you're closest to, because your true pitch may be somewhere in between notes, so "Off Pitch" indicates how far you are from the closest note.</span>
+	  		</div><br>
+				<b>Targets</b><br>
+		  	G String Note: <b>G3</b><br>
+				D String Note: <b>D4</b><br>
+				A String Note: <b>A4</b><br>
+				E String Note: <b>E5</b><br><br>
+				Your Note: <span id="tuner_note"><b>?</b></span><br>
+				Off Pitch: <span id="tuner_off_pitch"><b>?</b></span><br><br>
+				<button id="tuner_button">Begin!</button>
+			</div>
+		</div>
+
+		<div class="panel_header"><div>Metronome</div></div>
+		<div class="panel">
+			<div class="tool">
+				<div class="instructions">
+					Hit "Begin!" to start the metronome. The app detects changes to the parameters below and automatically updates the metronome.<br>
+				</div><br>
+		  	<audio id="metronome_tick" src="/assets/audio/Tick.mp3"></audio>
+				<audio id="metronome_tick_high" src="/assets/audio/TickHigh.mp3"></audio>
+				Beats Per Measure: <input type="text" id="metronome_beats_per_measure" value="4" maxlength="3"><br>
+				Tempo: <input type="text" id="metronome_tempo" value="100" maxlength="3"><span class="note"> (20 - 300 BPM)</span><br><br>
+				<button id="metronome_button">Begin!</button>
+			</div>
+		</div>
+
+		<div class="panel_header"><div>Interactive Fingerboard</div></div>
+		<div class="panel">
+			<div class="tool">
+				<div class="instructions">
+					Hold down any note to play it. This is a full digital violin fingerboard, and includes all notes playable on a real violin.
+	  		</div><br>
+				<table id="fingerboard_header">
+					<tr>
+						<td class="fingerboard_note_left">3rd<br><span>Pos.</span></td>
+						<td>
+							<table>
+								<tr>
+			  					<td><button class="fingerboard_button">G3</button></td>
+				  				<td><button class="fingerboard_button">D4</button></td>
+					  			<td><button class="fingerboard_button">A4</button></td>
+				  				<td><button class="fingerboard_button">E5</button></td>
+								</tr>
+							</table>
+						</td>
+						<td class="fingerboard_note_right">1st<br><span>Pos.</span></td>
+					</tr>
+				</table>
+				<table id="fingerboard">
+					<tr>
+						<td class="fingerboard_note_left"></td>
+	  				<td><button class="fingerboard_button">G3#</button></td>
+		  			<td><button class="fingerboard_button">D4#</button></td>
+			  		<td><button class="fingerboard_button">A4#</button></td>
+		  			<td><button class="fingerboard_button">F5</button></td>
+						<td class="fingerboard_note_right">Lo 1</td>
+					</tr>
+					<tr>
+						<td class="fingerboard_note_left"></td>
+						<td><button class="fingerboard_button">A3</button></td>
+						<td><button class="fingerboard_button">E4</button></td>
+						<td><button class="fingerboard_button">B4</button></td>
+						<td><button class="fingerboard_button">F5#</button></td>
+						<td class="fingerboard_note_right">1</td>
+					</tr>
+					<tr>
+						<td class="fingerboard_note_left"></td>
+						<td><button class="fingerboard_button">A3#</button></td>
+						<td><button class="fingerboard_button">F4</button></td>
+						<td><button class="fingerboard_button">C5</button></td>
+						<td><button class="fingerboard_button">G5</button></td>
+						<td class="fingerboard_note_right">Lo 2</td>
+					</tr>
+					<tr>
+						<td class="fingerboard_note_left"></td>
+						<td><button class="fingerboard_button">B3</button></td>
+						<td><button class="fingerboard_button">F4#</button></td>
+						<td><button class="fingerboard_button">C5#</button></td>
+						<td><button class="fingerboard_button">G5#</button></td>
+						<td class="fingerboard_note_right">2</td>
+					</tr>
+					<tr>
+						<td class="fingerboard_note_left">1</td>
+						<td><button class="fingerboard_button">C4</button></td>
+						<td><button class="fingerboard_button">G4</button></td>
+						<td><button class="fingerboard_button">D5</button></td>
+						<td><button class="fingerboard_button">A5</button></td>
+						<td class="fingerboard_note_right">3</td>
+					</tr>
+					<tr>
+						<td class="fingerboard_note_left">Hi 1<br>Lo 2</td>
+						<td><button class="fingerboard_button">C4#</button></td>
+						<td><button class="fingerboard_button">G4#</button></td>
+						<td><button class="fingerboard_button">D5#</button></td>
+						<td><button class="fingerboard_button">A5#</button></td>
+						<td class="fingerboard_note_right">Hi 3<br>Lo 4</td>
+					</tr>
+					<tr>
+						<td class="fingerboard_note_left">2</td>
+						<td><button class="fingerboard_button">D4</button></td>
+						<td><button class="fingerboard_button">A4</button></td>
+						<td><button class="fingerboard_button">E5</button></td>
+						<td><button class="fingerboard_button">B5</button></td>
+						<td class="fingerboard_note_right">4</td>
+					</tr>
+					<tr>
+						<td class="fingerboard_note_left">Hi 2<br>Lo 3</td>
+						<td><button class="fingerboard_button">D4#</button></td>
+						<td><button class="fingerboard_button">A4#</button></td>
+						<td><button class="fingerboard_button">F5</button></td>
+						<td><button class="fingerboard_button">C6</button></td>
+						<td class="fingerboard_note_right"></td>
+					</tr>
+					<tr>
+						<td class="fingerboard_note_left">Hi 3<br>Lo 4</td>
+						<td><button class="fingerboard_button">E4</button></td>
+						<td><button class="fingerboard_button">B4</button></td>
+						<td><button class="fingerboard_button">F5#</button></td>
+						<td><button class="fingerboard_button">C6#</button></td>
+						<td class="fingerboard_note_right"></td>
+					</tr>
+					<tr>
+						<td class="fingerboard_note_left">4</td>
+						<td><button class="fingerboard_button">F4</button></td>
+						<td><button class="fingerboard_button">C5</button></td>
+						<td><button class="fingerboard_button">G5</button></td>
+						<td><button class="fingerboard_button">D6</button></td>
+						<td class="fingerboard_note_right"></td>
+					</tr>
+					<tr>
+						<td class="fingerboard_note_left"></td>
+						<td><button class="fingerboard_button">F4#</button></td>
+						<td><button class="fingerboard_button">C5#</button></td>
+						<td><button class="fingerboard_button">G5#</button></td>
+						<td><button class="fingerboard_button">D6#</button></td>
+						<td class="fingerboard_note_right"></td>
+					</tr>
+					<tr>
+						<td class="fingerboard_note_left"></td>
+						<td><button class="fingerboard_button">G4</button></td>
+						<td><button class="fingerboard_button">D5</button></td>
+						<td><button class="fingerboard_button">A5</button></td>
+						<td><button class="fingerboard_button">E6</button></td>
+						<td class="fingerboard_note_right"></td>
+					</tr>
+					<tr>
+						<td class="fingerboard_note_left"></td>
+						<td><button class="fingerboard_button">G4#</button></td>
+						<td><button class="fingerboard_button">D5#</button></td>
+						<td><button class="fingerboard_button">A5#</button></td>
+						<td><button class="fingerboard_button">F6</button></td>
+						<td class="fingerboard_note_right"></td>
+					</tr>
+					<tr>
+						<td class="fingerboard_note_left"></td>
+						<td><button class="fingerboard_button">A4</button></td>
+						<td><button class="fingerboard_button">E5</button></td>
+						<td><button class="fingerboard_button">B5</button></td>
+						<td><button class="fingerboard_button">F6#</button></td>
+						<td class="fingerboard_note_right"></td>
+					</tr>
+					<tr>
+						<td class="fingerboard_note_left"></td>
+						<td><button class="fingerboard_button">A4#</button></td>
+						<td><button class="fingerboard_button">F5</button></td>
+						<td><button class="fingerboard_button">C6</button></td>
+						<td><button class="fingerboard_button">G6</button></td>
+						<td class="fingerboard_note_right"></td>
+					</tr>
+					<tr>
+						<td class="fingerboard_note_left"></td>
+						<td><button class="fingerboard_button">B4</button></td>
+						<td><button class="fingerboard_button">F5#</button></td>
+						<td><button class="fingerboard_button">C6#</button></td>
+						<td><button class="fingerboard_button">G6#</button></td>
+						<td class="fingerboard_note_right"></td>
+					</tr>
+					<tr>
+						<td class="fingerboard_note_left"></td>
+						<td><button class="fingerboard_button">C5</button></td>
+						<td><button class="fingerboard_button">G5</button></td>
+						<td><button class="fingerboard_button">D6</button></td>
+						<td><button class="fingerboard_button">A6</button></td>
+						<td class="fingerboard_note_right"></td>
+					</tr>
+					<tr>
+						<td class="fingerboard_note_left"></td>
+						<td><button class="fingerboard_button">C5#</button></td>
+						<td><button class="fingerboard_button">G5#</button></td>
+						<td><button class="fingerboard_button">D6#</button></td>
+						<td><button class="fingerboard_button">A6#</button></td>
+						<td class="fingerboard_note_right"></td>
+					</tr>
+					<tr>
+						<td class="fingerboard_note_left"></td>
+						<td><button class="fingerboard_button">D5</button></td>
+						<td><button class="fingerboard_button">A5</button></td>
+						<td><button class="fingerboard_button">E6</button></td>
+						<td><button class="fingerboard_button">B6</button></td>
+						<td class="fingerboard_note_right"></td>
+					</tr>
+					<tr>
+						<td class="fingerboard_note_left"></td>
+						<td><button class="fingerboard_button">D5#</button></td>
+						<td><button class="fingerboard_button">A5#</button></td>
+						<td><button class="fingerboard_button">F6</button></td>
+						<td><button class="fingerboard_button">C7</button></td>
+						<td class="fingerboard_note_right"></td>
+					</tr>
+					<tr>
+						<td class="fingerboard_note_left"></td>
+						<td><button class="fingerboard_button">E5</button></td>
+						<td><button class="fingerboard_button">B5</button></td>
+						<td><button class="fingerboard_button">F6#</button></td>
+						<td><button class="fingerboard_button">C7#</button></td>
+						<td class="fingerboard_note_right"></td>
+					</tr>
+					<tr>
+						<td class="fingerboard_note_left"></td>
+						<td><button class="fingerboard_button">F5</button></td>
+						<td><button class="fingerboard_button">C6</button></td>
+						<td><button class="fingerboard_button">G6</button></td>
+						<td><button class="fingerboard_button">D7</button></td>
+						<td class="fingerboard_note_right"></td>
+					</tr>
+					<tr>
+						<td class="fingerboard_note_left"></td>
+						<td><button class="fingerboard_button">F5#</button></td>
+						<td><button class="fingerboard_button">C6#</button></td>
+						<td><button class="fingerboard_button">G6#</button></td>
+						<td><button class="fingerboard_button">D7#</button></td>
+						<td class="fingerboard_note_right"></td>
+					</tr>
+					<tr>
+						<td class="fingerboard_note_left"></td>
+						<td><button class="fingerboard_button">G5</button></td>
+						<td><button class="fingerboard_button">D6</button></td>
+						<td><button class="fingerboard_button">A6</button></td>
+						<td><button class="fingerboard_button">E7</button></td>
+						<td class="fingerboard_note_right"></td>
+					</tr>
+					<tr>
+						<td class="fingerboard_note_left"></td>
+						<td><button class="fingerboard_button">G5#</button></td>
+						<td><button class="fingerboard_button">D6#</button></td>
+						<td><button class="fingerboard_button">A6#</button></td>
+						<td><button class="fingerboard_button">F7</button></td>
+						<td class="fingerboard_note_right"></td>
+					</tr>
+					<tr>
+						<td class="fingerboard_note_left"></td>
+						<td><button class="fingerboard_button">A5</button></td>
+						<td><button class="fingerboard_button">E6</button></td>
+						<td><button class="fingerboard_button">B6</button></td>
+						<td><button class="fingerboard_button">F7#</button></td>
+						<td class="fingerboard_note_right"></td>
+					</tr>
+					<tr>
+						<td class="fingerboard_note_left"></td>
+						<td><button class="fingerboard_button">A5#</button></td>
+						<td><button class="fingerboard_button">F6</button></td>
+						<td><button class="fingerboard_button">C7</button></td>
+						<td><button class="fingerboard_button">G7</button></td>
+						<td class="fingerboard_note_right"></td>
+					</tr>
+				</table>
+			</div>
+		</div>
+
+		<h2>For Reference</h2>
+
+		<div class="panel_header"><div>Helpful Resources</div></div>
+		<div class="panel">
+		  <div id="helpful_resources">
+				<a href="http://www.violinonline.com" target="_blank">Violin Online</a> &mdash; general knowledge, techniques, theory, and free sheet music<br><div class="helpful_resources_line_break"></div>
+				<a href="http://fiddlerman.com/" target="_blank">Fiddlerman</a> &mdash; tutorial videos, games, blog, news, forum, shop, and free sheet music<br><div class="helpful_resources_line_break"></div>
+				<a href="https://www.thestrad.com/" target="_blank">The Strad</a> &mdash; news, techniques, tips, and articles<br><div class="helpful_resources_line_break"></div>
+				<a href="http://www.violinist.com/" target="_blank">Violinist</a> &mdash; blog, news, and other articles<br><div class="helpful_resources_line_break"></div>
+				<a href="https://www.youtube.com/channel/UCzkT7lUQcMUMawwTlkdNZ3Q" target="_blank">Eddy Chen - Youtube Channel</a> &mdash; tutorial and technique videos<br><div class="helpful_resources_line_break"></div>
+				<a href="https://www.alisonsparrow.com" target="_blank">Alison Sparrow</a> &mdash; tutorial videos and free sheet music<br><div class="helpful_resources_line_break"></div>
+				<a href="http://www.theviolinsite.com/index.html" target="_blank">The Violin Site</a> &mdash; general knoweldge and free sheet music, including play-along audio<br><div class="helpful_resources_line_break"></div>
+				<a href="https://www.connollymusic.com/stringovation" target="_blank">Connolly Music - String Ovation</a> &mdash; articles, events, and news<br><div class="helpful_resources_line_break"></div>
+				<a href="https://violinsheetmusic.org/" target="_blank">Violin Sheet Music</a> &mdash; free sheet music<br><div class="helpful_resources_line_break"></div>
+				<a href="https://www.8notes.com/violin/" target="_blank">8 Notes</a> &mdash; free sheet music<br><div class="helpful_resources_line_break"></div>
+				<a href="http://imslp.org/wiki/Main_Page" target="_blank">IMSLP - Petrucci Music Library</a> &mdash; free sheet music for public domain works<br><div class="helpful_resources_line_break"></div>
+				<a href="https://en.wikipedia.org/wiki/List_of_musical_symbols" target="_blank">Wikipedia - List of Musical Symbols</a> &mdash; reference for sheet music notation<br><div class="helpful_resources_line_break"></div>
+				<a href="https://en.wikipedia.org/wiki/Glossary_of_musical_terminology" target="_blank">Wikipedia - Glossary of Music Terminology</a> &mdash; reference for music terms<br><div class="helpful_resources_line_break"></div>
+				<a href="https://en.wikipedia.org/wiki/Music_theory" target="_blank">Wikipedia - Music Theory</a> &mdash; overview of music theory<br>
+		  </div>
+		</div>
+		<br><br><br><br>
+
+		<div id='pre_footer'></div>
+	</div>
+
+	<div id='site_footer'>
+		<div>&copy; Gil Soffer<a id="feedback_link" href="mailto:gsoffer2@gmail.com">Feedback</a></div>
+	</div>
+
+	<script src='/assets/javascript/typed.min.js'></script> <!-- http://www.mattboldt.com/typed.js/ -->
+	<script src="/assets/javascript/myviolintoolkit.min.js"></script>
+</body>
+
+</html>

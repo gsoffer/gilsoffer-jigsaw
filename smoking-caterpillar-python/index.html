@@ -1,0 +1,758 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+	<title>Gil Soffer</title>
+	<link rel="icon" href="/assets/images/favicon.png">
+	<meta charset="utf-8">
+	<meta name="description" content="Gil Soffer: Personal Website">
+	<meta name="author" content="Gil Soffer">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel=stylesheet type=text/css href="/assets/css/app.css">
+	<link rel=stylesheet type=text/css href="/assets/css/default.css"><!-- used by highlight.js (I modified this css to my liking) -->
+</head>
+
+<body>
+
+	<div class="container-fluid">
+
+		<nav id='site-nav'>
+			<div id='site-nav-header'>
+				<a id='site-nav-home' href="/">Gil Soffer</a>
+				<button type="button" id='site-nav-button' data-toggle="collapse" data-target="#site-nav-links">
+					<span class="site-nav-button-bar"></span>
+					<span class="site-nav-button-bar"></span>
+					<span class="site-nav-button-bar"></span>
+				</button>
+			</div>
+			<div id='site-nav-links' class="collapse">
+				<ul>
+					<li><a href="/web-development">Web Development</a></li>
+					<li><a href="/electronics">Electronics</a></li>
+					<li><a href="https://github.com/gsoffer" target="_blank" class="external">GitHub</a></li>
+					<li><a href="https://www.linkedin.com/in/gil-soffer" target="_blank" class="external">LinkedIn</a></li>
+					<li><a href="mailto:gsoffer2@gmail.com" class="external">Contact</a></li>
+				</ul>
+			</div>
+		</nav>
+
+		
+	<div id='project-title'>Smoking Caterpillar</div>
+	<div id='project-hr'></div><br class='project-br'>
+	<div id='project-nav-button'>
+		<button id='project-nav-button-show' onclick="projectNavShow()">Sections &ensp; +</button>
+		<button id='project-nav-button-hide' onclick="projectNavHide()">Sections &ensp; &ndash;</button>
+	</div>
+	<div id='project-nav' class="project-nav-hide">
+		<a href="/smoking-caterpillar">Overview</a><br class='project-br'><br class='project-br'>
+		<a href="/smoking-caterpillar-speech">Speech</a><br class='project-br'><br class='project-br'>
+		<a href="/smoking-caterpillar-hardware">Hardware</a><br class='project-br'><br class='project-br'>
+		<a href="/smoking-caterpillar-python">Python</a>
+	</div>
+
+	
+	<div id='content'>
+
+		<p class='header1'>Python Code</p>
+
+
+
+
+		<p class="header2">Overview:</p>
+		<p>
+			The code for this project is organized into 11 python scripts. There is a script for each of the 10 animations, and then a main script that asynchronously calls the animation scripts when needed.
+		</p><br><br>
+
+
+
+
+		<p class="header2">Main Script (smokingcaterpillar.py):</p>
+		<p>
+			<pre><code class="code lang-python">#!/usr/bin/python
+
+# MODULE IMPORTS
+import Image
+import ImageDraw
+import ImageFont
+import time
+from rgbmatrix import Adafruit_RGBmatrix
+import os
+import sys
+import signal
+from subprocess import Popen
+import RPi.GPIO as gpio
+import pocketsphinx as ps
+
+# VARIABLE DECLARATIONS
+pushButtonPin = 24 # This is GPIO 24 (equivalent to pin 18)
+UNDEFINED = object() # Set UNDEFINED as null object
+
+# AUDIO RECORDING SETUP
+recordCommand = "arecord -D plughw:1,0 -f cd -c 1 -r 16000 /home/pi/recording.wav" # Set the recording command
+recordSubProcess = UNDEFINED # Set to null object initially
+
+# SPEECH RECOGNITION SETUP
+animationSubProcess = UNDEFINED # Set to null object initially
+decoder = ps.Decoder(jsgf='/home/pi/smokewords.gram', dict='/home/pi/smokewords.dic', samprate='16000') # Initialize the speech decoder
+
+# GPIO SETUP
+gpio.setmode(gpio.BCM) # Set the port numbering scheme to BCM
+gpio.setup(pushButtonPin, gpio.IN, pull_up_down=gpio.PUD_UP) # Set as input with pull-up resistor (HIGH when not pressed)
+
+# DEFINE ANIMATION FUNCTION
+# Set the appropriate animation command based on the spoken word
+def playAnimation(smokeword):
+    global animationCommand
+    if (smokeword == 'A'):
+        animationCommand = "sudo python A.py"
+    elif (smokeword == 'E'):
+                animationCommand = "sudo python E.py"
+        elif (smokeword == 'I'):
+                animationCommand = "sudo python I.py"
+        elif (smokeword == 'O'):
+                animationCommand = "sudo python O.py"
+        elif (smokeword == 'U'):
+                animationCommand = "sudo python U.py"
+        elif (smokeword == 'C'):
+                animationCommand = "sudo python C.py"
+        elif (smokeword == 'NOT'):
+                animationCommand = "sudo python NOT.py"
+        elif (smokeword == 'Y'):
+                animationCommand = "sudo python Y.py"
+        elif (smokeword == 'WHO'):
+                animationCommand = "sudo python WHO.py"
+        elif (smokeword == 'R'):
+                animationCommand = "sudo python R.py"
+
+# DEFINE INTERRUPT FUNCTION
+# Button Interrupt Callback Function
+def buttonCallback(channel):
+    global animationCommand
+    global animationSubProcess
+    global recordSubProcess
+    # BUTTON RELEASE
+    if(gpio.input(pushButtonPin) == 1): # If button release
+        # STOP RECORDING
+        if recordSubProcess is not UNDEFINED: # If recording initialized
+            os.kill(recordSubProcess.pid, signal.SIGTERM) # Stop recording
+        # CONVERT SPEECH TO TEXT
+        fh = open("/home/pi/recording.wav", "rb") # Open the recording
+        decoder.decode_raw(fh) # Decode the recording
+        smokeword, uttid, score = decoder.get_hyp() # Set the guess as "smokeword"
+        # START ANIMATING
+        if(smokeword in ['A','E','I','O','U','C','NOT','Y','WHO','R']): # If understood
+            playAnimation(smokeword) # Set the appropriate animation command
+            if animationSubProcess is not UNDEFINED: # If animation initialized
+                os.kill(animationSubProcess.pid, signal.SIGTERM) # If still animating for some reason then kill that animation
+            animationSubProcess = Popen(animationCommand.split()) # Start animating
+    # BUTTON PRESS
+    elif(gpio.input(pushButtonPin) == 0): # If button press
+        # STOP ANIMATING
+        if animationSubProcess is not UNDEFINED: # If animation initialized
+            os.kill(animationSubProcess.pid, signal.SIGTERM) # Stop animating
+        # START RECORDING
+        if recordSubProcess is not UNDEFINED: # If recording initialized
+            os.kill(recordSubProcess.pid, signal.SIGTERM) # If still recording for some reason then kill that recording
+        recordSubProcess = Popen(recordCommand.split()) # Start recording
+
+# SET INTERRUPT EVENT
+# Set GPIO Interrupt Detection for Button (both press and release)
+gpio.add_event_detect(pushButtonPin, gpio.BOTH, callback=buttonCallback, bouncetime=100);
+
+# MAIN LOOP
+try:
+    while(True):
+        time.sleep(1)
+except KeyboardInterrupt:
+    print "Keyboard Interrupt"
+    gpio.cleanup()
+except:
+    print "Unexpected error:", sys.exc_info()[0]
+    gpio.cleanup()
+    raise</code></pre>
+		</p><br><br>
+
+
+
+
+		<p class="header2">A.py:</p>
+		<p>
+			<pre><code class="code lang-python">#!/usr/bin/python
+
+import Image
+import ImageDraw
+import ImageFont
+import time
+from rgbmatrix import Adafruit_RGBmatrix
+
+
+# The 32x64 matrix is internally made up of two 32x32 sub-matrices
+cols_per_chain = 32;
+chains = 2;
+total_rows = 32;
+total_columns = cols_per_chain * chains;
+
+# Rows and chain length are both required parameters:
+matrix = Adafruit_RGBmatrix(total_rows, chains)
+
+# A
+image = Image.open("./letterA.bmp")
+image.load()
+while(1):
+        for n in range((total_columns - image.size[0]), 0, -1):
+                matrix.SetImage(image.im.id, n, 1)
+                time.sleep(0.04)
+    for n in range(0, (total_columns - image.size[0])):
+        matrix.SetImage(image.im.id, n, 1)
+        time.sleep(0.04)</code></pre>
+		</p><br><br>
+
+
+
+
+		<p class="header2">C.py:</p>
+		<p>
+			<pre><code class="code lang-python">#!/usr/bin/python
+
+import Image
+import ImageDraw
+import ImageFont
+import time
+from rgbmatrix import Adafruit_RGBmatrix
+
+
+# The 32x64 matrix is internally made up of two 32x32 sub-matrices
+cols_per_chain = 32;
+chains = 2;
+total_rows = 32;
+total_columns = cols_per_chain * chains;
+
+# Rows and chain length are both required parameters:
+matrix = Adafruit_RGBmatrix(total_rows, chains)
+
+# C
+image = Image.new("RGB", (64, 32))
+draw = ImageDraw.Draw(image)
+draw.ellipse([(6,4), (56,26)], fill="white", outline="white")
+draw.ellipse([(21,5), (41,25)], fill='#436EEE', outline='#436EEE')
+draw.ellipse([(26,10), (36,20)], fill="black", outline="black")
+matrix.SetImage(image.im.id, 0, 0)
+time.sleep(1.4)
+while(1):
+    for n in range(1,4):
+        draw.ellipse([(6,4), (56,26)], fill="white", outline="white")
+        draw.ellipse([(21+n,5), (41+n,25)], fill='#436EEE', outline='#436EEE')
+        draw.ellipse([(26+n,10), (36+n,20)], fill="black", outline="black")
+        matrix.SetImage(image.im.id, 0, 0)
+        time.sleep(0.04)
+    time.sleep(2)
+    for n in range(3,-1,-1):
+        draw.ellipse([(6,4), (56,26)], fill="white", outline="white")
+        draw.ellipse([(21+n,5), (41+n,25)], fill='#436EEE', outline='#436EEE')
+        draw.ellipse([(26+n,10), (36+n,20)], fill="black", outline="black")
+                matrix.SetImage(image.im.id, 0, 0)
+                time.sleep(0.04)
+    time.sleep(3)
+        for n in range(1,4):
+                draw.ellipse([(6,4), (56,26)], fill="white", outline="white")
+                draw.ellipse([(21-n,5), (41-n,25)], fill='#436EEE', outline='#436EEE')
+                draw.ellipse([(26-n,10), (36-n,20)], fill="black", outline="black")
+                matrix.SetImage(image.im.id, 0, 0)
+                time.sleep(0.04)
+        time.sleep(2)
+        for n in range(3,-1,-1):
+                draw.ellipse([(6,4), (56,26)], fill="white", outline="white")
+                draw.ellipse([(21-n,5), (41-n,25)], fill='#436EEE', outline='#436EEE')
+                draw.ellipse([(26-n,10), (36-n,20)], fill="black", outline="black")
+                matrix.SetImage(image.im.id, 0, 0)
+                time.sleep(0.04)
+        time.sleep(3)</code></pre>
+		</p><br><br>
+
+
+
+
+		<p class="header2">E.py:</p>
+		<p>
+			<pre><code class="code lang-python">#!/usr/bin/python
+
+import Image
+import ImageDraw
+import ImageFont
+import time
+from rgbmatrix import Adafruit_RGBmatrix
+
+
+# The 32x64 matrix is internally made up of two 32x32 sub-matrices
+cols_per_chain = 32;
+chains = 2;
+total_rows = 32;
+total_columns = cols_per_chain * chains;
+
+# Rows and chain length are both required parameters:
+matrix = Adafruit_RGBmatrix(total_rows, chains)
+
+# E
+image = Image.new("RGB", (64, 32))
+draw = ImageDraw.Draw(image)
+font = ImageFont.truetype("/usr/share/fonts/truetype/freefont/FreeSansBold.ttf", 32)
+draw.text((10,-1), "E", fill="blue", font=font)
+draw.rectangle([(28,4), (29,7)], fill="black", outline="black")
+draw.rectangle([(24,14), (29,17)], fill="black", outline="black")
+draw.rectangle([(28,24), (29,27)], fill="black", outline="black")
+matrix.SetImage(image.im.id, 0, 0)
+time.sleep(0.1)
+while(1):
+    for n in range(0,15):
+        draw.line([(28+n, 4), (28+n, 7)], fill="blue")
+        matrix.SetImage(image.im.id, 0, 0)
+        time.sleep(0.04)
+    for n in range(15,0,-1):
+        draw.line([(28+n, 4), (28+n, 7)], fill="black")
+        matrix.SetImage(image.im.id, 0, 0)
+        time.sleep(0.04)
+    time.sleep(0.1)
+    for n in range(0,15):
+        draw.line([(24+n, 14), (24+n, 17)], fill="blue")
+        matrix.SetImage(image.im.id, 0, 0)
+        time.sleep(0.04)
+    for n in range(15,0,-1):
+        draw.line([(24+n, 14), (24+n, 17)], fill="black")
+        matrix.SetImage(image.im.id, 0, 0)
+        time.sleep(0.04)
+    time.sleep(0.1)
+    for n in range(0,15):
+        draw.line([(28+n, 24), (28+n, 27)], fill="blue")
+        matrix.SetImage(image.im.id, 0, 0)
+        time.sleep(0.04)
+    for n in range(15,0,-1):
+        draw.line([(28+n, 24), (28+n, 27)], fill="black")
+        matrix.SetImage(image.im.id, 0, 0)
+        time.sleep(0.04)
+    time.sleep(0.1)</code></pre>
+		</p><br><br>
+
+
+
+
+		<p class="header2">I.py:</p>
+		<p>
+			<pre><code class="code lang-python">#!/usr/bin/python
+
+import Image
+import ImageDraw
+import ImageFont
+import time
+from rgbmatrix import Adafruit_RGBmatrix
+
+
+# The 32x64 matrix is internally made up of two 32x32 sub-matrices
+cols_per_chain = 32;
+chains = 2;
+total_rows = 32;
+total_columns = cols_per_chain * chains;
+
+# Rows and chain length are both required parameters:
+matrix = Adafruit_RGBmatrix(total_rows, chains)
+
+# I
+image = Image.new("RGB", (64, 32))
+draw = ImageDraw.Draw(image)
+font = ImageFont.truetype("/usr/share/fonts/truetype/freefont/FreeMonoBold.ttf", 8)
+while(1):
+    draw.rectangle([(0,0), (63,31)], fill="black")
+    draw.text((30,12), "I", fill="yellow", font=font)
+    matrix.SetImage(image.im.id, 0, 0)
+    time.sleep(1.2)
+    for n in range(1,3):
+        draw.text((30,12+n*6), "I", fill="yellow", font=font)
+        draw.text((30,12-n*6), "I", fill="yellow", font=font)
+        matrix.SetImage(image.im.id, 0, 0)
+        time.sleep(0.4)
+    for n in range(1,3):
+            draw.text((30+n*4,0), "I", fill="yellow", font=font)
+            draw.text((30-n*4,0), "I", fill="yellow", font=font)
+            draw.text((30+n*4,24), "I", fill="yellow", font=font)
+            draw.text((30-n*4,24), "I", fill="yellow", font=font)
+            matrix.SetImage(image.im.id, 0, 0)
+        time.sleep(0.4)
+    time.sleep(1.2)</code></pre>
+		</p><br><br>
+
+
+
+
+		<p class="header2">Not.py:</p>
+		<p>
+			<pre><code class="code lang-python">#!/usr/bin/python
+
+import Image
+import ImageDraw
+import ImageFont
+import time
+from rgbmatrix import Adafruit_RGBmatrix
+
+
+# The 32x64 matrix is internally made up of two 32x32 sub-matrices
+cols_per_chain = 32;
+chains = 2;
+total_rows = 32;
+total_columns = cols_per_chain * chains;
+
+# Rows and chain length are both required parameters:
+matrix = Adafruit_RGBmatrix(total_rows, chains)
+
+# NOT
+image = Image.new("RGB", (64, 32))
+draw = ImageDraw.Draw(image)
+draw.ellipse([(18,1), (46,29)], outline="red", fill="red")
+draw.ellipse([(19,2), (45,28)], outline="red", fill="black")
+draw.line([(22,4), (42,24)], fill="red")
+draw.line([(22,5), (42,25)], fill="red")
+draw.line([(22,6), (42,26)], fill="red")
+matrix.SetImage(image.im.id, 0, 0)
+while(1):
+    time.sleep(1)</code></pre>
+		</p><br><br>
+
+
+
+
+		<p class="header2">O.py:</p>
+		<p>
+			<pre><code class="code lang-python">#!/usr/bin/python
+
+import Image
+import ImageDraw
+import ImageFont
+import time
+from rgbmatrix import Adafruit_RGBmatrix
+
+
+# The 32x64 matrix is internally made up of two 32x32 sub-matrices
+cols_per_chain = 32;
+chains = 2;
+total_rows = 32;
+total_columns = cols_per_chain * chains;
+
+# Rows and chain length are both required parameters:
+matrix = Adafruit_RGBmatrix(total_rows, chains)
+
+# O
+image = Image.new("RGB", (64, 32))
+draw = ImageDraw.Draw(image)
+while(1):
+    draw.ellipse([(18,1), (46,29)], outline="white")
+    draw.ellipse([(22,5), (42,25)], outline="white")
+    matrix.SetImage(image.im.id, 0, 0)
+    time.sleep(1.5)
+    draw.ellipse([(26,9), (38,21)], outline="white")
+    matrix.SetImage(image.im.id, 0, 0)
+    time.sleep(1.2)
+    draw.ellipse([(30,13), (34,17)], outline="white")
+    matrix.SetImage(image.im.id, 0, 0)
+    time.sleep(1.2)
+    for n in range(9):
+        draw.ellipse([(30-n,13-n), (34+n,17+n)], outline="white", fill="black");
+        matrix.SetImage(image.im.id, 0, 0)
+        time.sleep(0.06)</code></pre>
+		</p><br><br>
+
+
+
+
+		<p class="header2">R.py:</p>
+		<p>
+			<pre><code class="code lang-python">#!/usr/bin/python
+
+import Image
+import ImageDraw
+import ImageFont
+import time
+from rgbmatrix import Adafruit_RGBmatrix
+
+
+# The 32x64 matrix is internally made up of two 32x32 sub-matrices
+cols_per_chain = 32;
+chains = 2;
+total_rows = 32;
+total_columns = cols_per_chain * chains;
+
+# Rows and chain length are both required parameters:
+matrix = Adafruit_RGBmatrix(total_rows, chains)
+
+# R
+image = Image.new("RGB", (64, 32))
+draw = ImageDraw.Draw(image)
+font = ImageFont.truetype("/usr/share/fonts/truetype/freefont/FreeSansBold.ttf", 34)
+draw.text((20,-3), "P", fill="orange", font=font)
+draw.line([(33, 19), (37, 27)], fill="orange")
+draw.line([(34, 19), (38, 27)], fill="orange")
+draw.line([(35, 19), (39, 27)], fill="orange")
+draw.line([(36, 19), (40, 27)], fill="orange")
+draw.line([(37, 19), (41, 27)], fill="orange")
+matrix.SetImage(image.im.id, 0, 0)
+time.sleep(1.5)
+while(1):
+    for n in range(7):
+        draw.line([(33, 19), (37-n, 27)], fill="black")
+        draw.line([(34, 19), (38-n, 27)], fill="black")
+        draw.line([(35, 19), (39-n, 27)], fill="black")
+        draw.line([(36, 19), (40-n, 27)], fill="black")
+        draw.line([(37, 19), (41-n, 27)], fill="black")
+        draw.line([(33, 19), (37-n-1, 27)], fill="orange")
+        draw.line([(34, 19), (38-n-1, 27)], fill="orange")
+        draw.line([(35, 19), (39-n-1, 27)], fill="orange")
+        draw.line([(36, 19), (40-n-1, 27)], fill="orange")
+        draw.line([(37, 19), (41-n-1, 27)], fill="orange")
+        matrix.SetImage(image.im.id, 0, 0)
+        time.sleep(0.02)
+        for n in range(7):
+                draw.line([(33, 19), (30+n, 27)], fill="black")
+                draw.line([(34, 19), (31+n, 27)], fill="black")
+                draw.line([(35, 19), (32+n, 27)], fill="black")
+                draw.line([(36, 19), (33+n, 27)], fill="black")
+                draw.line([(37, 19), (34+n, 27)], fill="black")
+                draw.line([(33, 19), (30+n+1, 27)], fill="orange")
+                draw.line([(34, 19), (31+n+1, 27)], fill="orange")
+                draw.line([(35, 19), (32+n+1, 27)], fill="orange")
+                draw.line([(36, 19), (33+n+1, 27)], fill="orange")
+                draw.line([(37, 19), (34+n+1, 27)], fill="orange")
+                matrix.SetImage(image.im.id, 0, 0)
+                time.sleep(0.02)
+        for n in range(7):
+                draw.line([(33, 19), (37+n, 27-n)], fill="black")
+                draw.line([(34, 19), (38+n, 27-n)], fill="black")
+                draw.line([(35, 19), (39+n, 27-n)], fill="black")
+                draw.line([(36, 19), (40+n, 27-n)], fill="black")
+                draw.line([(37, 19), (41+n, 27-n)], fill="black")
+                draw.line([(33, 19), (37+n+1, 27-n-1)], fill="orange")
+                draw.line([(34, 19), (38+n+1, 27-n-1)], fill="orange")
+                draw.line([(35, 19), (39+n+1, 27-n-1)], fill="orange")
+                draw.line([(36, 19), (40+n+1, 27-n-1)], fill="orange")
+                draw.line([(37, 19), (41+n+1, 27-n-1)], fill="orange")
+                matrix.SetImage(image.im.id, 0, 0)
+                time.sleep(0.02)
+        for n in range(7):
+                draw.line([(33, 19), (44-n, 20+n)], fill="black")
+                draw.line([(34, 19), (45-n, 20+n)], fill="black")
+                draw.line([(35, 19), (46-n, 20+n)], fill="black")
+                draw.line([(36, 19), (47-n, 20+n)], fill="black")
+                draw.line([(37, 19), (48-n, 20+n)], fill="black")
+                draw.line([(33, 19), (44-n-1, 20+n+1)], fill="orange")
+                draw.line([(34, 19), (45-n-1, 20+n+1)], fill="orange")
+                draw.line([(35, 19), (46-n-1, 20+n+1)], fill="orange")
+                draw.line([(36, 19), (47-n-1, 20+n+1)], fill="orange")
+                draw.line([(37, 19), (48-n-1, 20+n+1)], fill="orange")
+                matrix.SetImage(image.im.id, 0, 0)
+                time.sleep(0.02)
+    time.sleep(2)</code></pre>
+		</p><br><br>
+
+
+
+
+		<p class="header2">U.py:</p>
+		<p>
+			<pre><code class="code lang-python">#!/usr/bin/python
+
+import Image
+import ImageDraw
+import ImageFont
+import time
+from rgbmatrix import Adafruit_RGBmatrix
+
+
+# The 32x64 matrix is internally made up of two 32x32 sub-matrices
+cols_per_chain = 32;
+chains = 2;
+total_rows = 32;
+total_columns = cols_per_chain * chains;
+
+# Rows and chain length are both required parameters:
+matrix = Adafruit_RGBmatrix(total_rows, chains)
+
+# U
+image = Image.new("RGB", (64, 32))
+draw = ImageDraw.Draw(image)
+font = ImageFont.truetype("/usr/share/fonts/truetype/freefont/FreeSansBold.ttf", 38)
+draw.text((18,-4), "U", fill="white", font=font)
+u_colors = []
+u_colors.append("red");
+u_colors.append("orange");
+u_colors.append("yellow");
+u_colors.append("green");
+u_colors.append("blue");
+u_colors.append("indigo");
+u_colors.append("violet");
+while(1):
+    u_last_color = u_colors[6]
+    for n in range(6,0,-1):
+        u_colors[n] = u_colors[n-1]
+    u_colors[0] = u_last_color
+    for n in range(7):
+        draw.rectangle([(22, 3+3*n), (25, 5+3*n)], fill=u_colors[n])
+    draw.line([(23, 24), (26, 24)], fill=u_colors[0])
+    draw.line([(23, 25), (27, 25)], fill=u_colors[0])
+    draw.line([(24, 26), (27, 26)], fill=u_colors[0])
+    draw.line([(25, 27), (27, 27)], fill=u_colors[0])
+    draw.rectangle([(28, 26), (31, 28)], fill=u_colors[1])
+    draw.rectangle([(32, 26), (35, 28)], fill=u_colors[2])
+    draw.line([(37, 24), (40, 24)], fill=u_colors[3])
+    draw.line([(36, 25), (40, 25)], fill=u_colors[3])
+    draw.line([(36, 26), (39, 26)], fill=u_colors[3])
+    draw.line([(36, 27), (38, 27)], fill=u_colors[3])
+    for n in range(7):
+        draw.rectangle([(38, 21-3*n), (41, 23-3*n)], fill=u_colors[(n+4)%7])
+    matrix.SetImage(image.im.id, 0, 0)
+    time.sleep(0.06)</code></pre>
+		</p><br><br>
+
+
+
+
+		<p class="header2">Who.py:</p>
+		<p>
+			<pre><code class="code lang-python">#!/usr/bin/python
+
+import Image
+import ImageDraw
+import ImageFont
+import time
+from rgbmatrix import Adafruit_RGBmatrix
+
+
+# The 32x64 matrix is internally made up of two 32x32 sub-matrices
+cols_per_chain = 32;
+chains = 2;
+total_rows = 32;
+total_columns = cols_per_chain * chains;
+
+# Rows and chain length are both required parameters:
+matrix = Adafruit_RGBmatrix(total_rows, chains)
+
+# WHO
+image = Image.new("RGB", (64, 32))
+draw = ImageDraw.Draw(image)
+font = ImageFont.truetype("/usr/share/fonts/truetype/freefont/FreeSansBold.ttf", 14)
+draw.rectangle([(0,11), (2,21)], fill="purple")
+draw.rectangle([(61,11), (63,21)], fill="purple")
+draw.text((2,8), "?", fill="purple", font=font)
+matrix.SetImage(image.im.id, 0, 0)
+time.sleep(0.05)
+while(1):
+    for n in range(8):
+        draw.rectangle([(2+3*n-2,8-n), (2+3*n+7,8-n+16)], fill="black")
+        draw.text((2+3*(n+1),8-n-1), "?", fill="purple", font=font)
+        draw.rectangle([(0,11-n), (2,21-n)], fill="black")
+        draw.rectangle([(0,11-n-1), (2,21-n-1)], fill="purple")
+        draw.rectangle([(61,11+n), (63,21+n)], fill="black")
+            draw.rectangle([(61,11+n+1), (63,21+n+1)], fill="purple")
+        matrix.SetImage(image.im.id, 0, 0)
+        time.sleep(0.05)
+    for n in range(9):
+            draw.rectangle([(26+3*n-2,n), (26+3*n+7,n+16)], fill="black")
+            draw.text((26+3*(n+1),n+1), "?", fill="purple", font=font)
+            draw.rectangle([(0,3+n), (2,13+n)], fill="black")
+            draw.rectangle([(0,3+n+1), (2,13+n+1)], fill="purple")
+            draw.rectangle([(61,19-n), (63,29-n)], fill="black")
+            draw.rectangle([(61,19-n-1), (63,29-n-1)], fill="purple")
+            matrix.SetImage(image.im.id, 0, 0)
+            time.sleep(0.05)
+    for n in range(8):
+            draw.rectangle([(53-3*n-2,8+n), (53-3*n+7,8+n+16)], fill="black")
+            draw.text((53-3*(n+1),8+n+1), "?", fill="purple", font=font)
+            draw.rectangle([(0,11+n), (2,21+n)], fill="black")
+            draw.rectangle([(0,11+n+1), (2,21+n+1)], fill="purple")
+            draw.rectangle([(61,11-n), (63,21-n)], fill="black")
+            draw.rectangle([(61,11-n-1), (63,21-n-1)], fill="purple")
+            matrix.SetImage(image.im.id, 0, 0)
+            time.sleep(0.05)
+    for n in range(9):
+            draw.rectangle([(29-3*n-2,16-n), (29-3*n+7,16-n+16)], fill="black")
+            draw.text((29-3*(n+1),16-n-1), "?", fill="purple", font=font)
+            draw.rectangle([(61,3+n), (63,13+n)], fill="black")
+            draw.rectangle([(61,3+n+1), (63,13+n+1)], fill="purple")
+            draw.rectangle([(0,19-n), (2,29-n)], fill="black")
+            draw.rectangle([(0,19-n-1), (2,29-n-1)], fill="purple")
+            matrix.SetImage(image.im.id, 0, 0)
+            time.sleep(0.05)</code></pre>
+		</p><br><br>
+
+
+
+
+		<p class="header2">Y.py:</p>
+		<p>
+			<pre><code class="code lang-python">#!/usr/bin/python
+
+import Image
+import ImageDraw
+import ImageFont
+import time
+from rgbmatrix import Adafruit_RGBmatrix
+
+
+# The 32x64 matrix is internally made up of two 32x32 sub-matrices
+cols_per_chain = 32;
+chains = 2;
+total_rows = 32;
+total_columns = cols_per_chain * chains;
+
+# Rows and chain length are both required parameters:
+matrix = Adafruit_RGBmatrix(total_rows, chains)
+
+# Y
+image = Image.new("RGB", (64, 32))
+draw = ImageDraw.Draw(image)
+font = ImageFont.truetype("/usr/share/fonts/truetype/freefont/FreeSansBold.ttf", 16)
+font2 = ImageFont.truetype("/usr/share/fonts/truetype/freefont/FreeSansBold.ttf", 12)
+font3 = ImageFont.truetype("/usr/share/fonts/truetype/freefont/FreeSansBold.ttf", 8)
+font4 = ImageFont.truetype("/usr/share/fonts/truetype/freefont/FreeSans.ttf", 6)
+font3_array = [22, 27, 31, 36]
+font4_array = [20, 21, 24, 26, 29, 30, 33, 35, 38, 39]
+while(1):
+    draw.rectangle([(0,0), (63,31)], fill="black")
+    draw.text((27,18), "Y", fill="brown", font=font)
+    matrix.SetImage(image.im.id, 0, 0)
+    time.sleep(1)
+    draw.text((24,9), "Y", fill="brown", font=font2)
+    matrix.SetImage(image.im.id, 0, 0)
+        time.sleep(0.6)
+    draw.text((32,9), "Y", fill="brown", font=font2)
+    matrix.SetImage(image.im.id, 0, 0)
+        time.sleep(0.6)
+    for branch in font3_array:
+        draw.text((branch, 4), "Y", fill="brown", font=font3)
+        matrix.SetImage(image.im.id, 0, 0)
+            time.sleep(0.6)
+    for leaf in font4_array:
+        draw.text((leaf, 0), "Y", fill="green", font=font4)
+        matrix.SetImage(image.im.id, 0, 0)
+            time.sleep(0.6)
+    time.sleep(4)​</code></pre>
+		</p><br><br><br><br>
+
+		<a href="/smoking-caterpillar" class="continue_to">&#8680; Back to Overview</a><br><br><br><br><br>
+
+	</div>
+
+
+
+		<div id='prefooter'></div>
+	</div>
+
+	<div id='footer'>
+		<div>&copy; Gil Soffer</div>
+	</div>
+
+</body>
+
+<script type="text/javascript" src="/assets/javascript/jquery.min.js"></script><!-- bootstrap requires jquery -->
+<script type="text/javascript" src="/assets/javascript/bootstrap.min.js"></script>
+<script type="text/javascript" src="/assets/javascript/app.js"></script>
+<script type="text/javascript" src="/assets/javascript/highlight.pack.js"></script><!-- i included Bash, SQL, Arduino, and Python - re-download and replace for more languages (don't need to replace default.css) -->
+<script>hljs.initHighlightingOnLoad();</script>
+
+</html>

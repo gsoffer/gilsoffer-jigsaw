@@ -1,0 +1,872 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+	<title>Gil Soffer</title>
+	<link rel="icon" href="/assets/images/favicon.png">
+	<meta charset="utf-8">
+	<meta name="description" content="Gil Soffer: Personal Website">
+	<meta name="author" content="Gil Soffer">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel=stylesheet type=text/css href="/assets/css/app.css">
+	<link rel=stylesheet type=text/css href="/assets/css/default.css"><!-- used by highlight.js (I modified this css to my liking) -->
+</head>
+
+<body>
+
+	<div class="container-fluid">
+
+		<nav id='site-nav'>
+			<div id='site-nav-header'>
+				<a id='site-nav-home' href="/">Gil Soffer</a>
+				<button type="button" id='site-nav-button' data-toggle="collapse" data-target="#site-nav-links">
+					<span class="site-nav-button-bar"></span>
+					<span class="site-nav-button-bar"></span>
+					<span class="site-nav-button-bar"></span>
+				</button>
+			</div>
+			<div id='site-nav-links' class="collapse">
+				<ul>
+					<li><a href="/web-development">Web Development</a></li>
+					<li><a href="/electronics">Electronics</a></li>
+					<li><a href="https://github.com/gsoffer" target="_blank" class="external">GitHub</a></li>
+					<li><a href="https://www.linkedin.com/in/gil-soffer" target="_blank" class="external">LinkedIn</a></li>
+					<li><a href="mailto:gsoffer2@gmail.com" class="external">Contact</a></li>
+				</ul>
+			</div>
+		</nav>
+
+		
+	<div id='project-title'>Interactive Globe</div>
+	<div id='project-hr'></div><br class='project-br'>
+	<div id='project-nav-button'>
+		<button id='project-nav-button-show' onclick="projectNavShow()">Sections &ensp; +</button>
+		<button id='project-nav-button-hide' onclick="projectNavHide()">Sections &ensp; &ndash;</button>
+	</div>
+	<div id='project-nav' class="project-nav-hide">
+		<a href="/interactive-globe">Overview</a><br class='project-br'><br class='project-br'>
+		<a href="/interactive-globe-sqlite">SQLite</a><br class='project-br'><br class='project-br'>
+		<a href="/interactive-globe-speech">Speech</a><br class='project-br'><br class='project-br'>
+		<a href="/interactive-globe-hardware">Hardware</a><br class='project-br'><br class='project-br'>
+		<a href="/interactive-globe-python">Python</a>
+	</div>
+
+	
+	<div id='content'>
+
+		<p class='header1'>Python Code</p>
+
+
+
+
+		<p class="header2">Overview:</p>
+		<p>
+			I organized the final code that runs on the Pi into five different scripts. There is one main script, which imports the other four. Each of the four imported scripts defines functions that are referenced by the main script, making the main script shorter and cleaner, and making the overall code writing process more organized.
+		</p><br><br>
+
+
+
+
+		<p class="header2">Audio Output (aplayEspeak.py):</p>
+		<p>
+			This Python script defines functions that output audio, whether the globe is providing demographic information for a given location, or requesting a new location to be spoken:
+		</p>
+		<p>
+			<pre><code class="code lang-python">from subprocess import Popen, PIPE;
+import tempfile;
+import time;
+​
+
+UNDEFINED_ESPEAK = object(); # Create generic null object
+espeakSubProcTemp = UNDEFINED_ESPEAK; # Initialize to point to null object
+espeakSubProcess = UNDEFINED_ESPEAK; # Initialize to point to null object
+espeakText = UNDEFINED_ESPEAK; # Initialize to point to null object
+
+
+# This function kills the espeak sub-processes
+def killEspeakSubProc():
+   global espeakSubProcTemp
+   global espeakSubProcess
+   global espeakText
+   if espeakText is not UNDEFINED_ESPEAK:
+      espeakText.close() # Close the temp file
+   if espeakSubProcTemp is not UNDEFINED_ESPEAK:
+      if espeakSubProcTemp.poll() == None:
+         espeakSubProcTemp.kill() # Kill the piped espeak process if it exists
+   if espeakSubProcess is not UNDEFINED_ESPEAK:
+      if espeakSubProcess.poll() == None:
+         espeakSubProcess.kill() # Kill the aplay process if it exists
+
+
+# Espeak stutters on the raspberry pi when piped directly to audio out
+# The solution is to pipe the output of espeak to "aplay", which properly projects the audio
+# This function creates a sub python process which successfully reads aloud the text passed to it
+def openEspeakSubProc(arg_text):
+   global espeakSubProcTemp
+   global espeakSubProcess
+   global espeakText
+   killEspeakSubProc()
+   espeakText = tempfile.NamedTemporaryFile() # Create a temporary file
+   espeakText.write(arg_text) # Write the text to the temp file
+   espeakText.seek(0) # Go back to the first line so it is read from the beginning
+   # print espeakText.read() # Print the contents of the file
+   espeakCommand = 'espeak -v en-us+m7 -a 200 -s 165 -g 1 --stdout -f ' + espeakText.name # Determine the espeak command that will be piped
+   espeakSubProcTemp = Popen(espeakCommand.split(), stdout=PIPE) # Open the espeak sub process
+   espeakSubProcess = Popen('aplay', stdin=espeakSubProcTemp.stdout) # Take the espeak sub process output and pipe to aplay
+   #while espeakSubProcess.poll() == None:
+   #time.sleep(0.2) # Wait until the audio has finished speaking
+   #espeakText.close() # Close and delete the temporary file
+
+
+# Read aloud a country's details
+def speakCountryInfo(arg_data, arg_US, arg_random):
+   killEspeakSubProc() # Stop speaking if a process is open
+   if arg_random == 1:
+      sayName = "I CHOSE " + arg_data[1] + ".\n\n\n" # The name of the randomly chosen country
+   else:
+      sayName = arg_data[1] + ".\n" # The name of the country
+   if arg_data[7]:
+      sayCap = "CAPITAL. " + arg_data[7] + ".\n\n\n" # The country's capital
+   else:
+      sayCap = ""
+   if arg_data[9]:
+      sayLang = "PRIMARY LANGUAGE. " + arg_data[9] + ".\n\n\n" # The country's primary language
+   else:
+      sayLang = ""
+   if arg_data[8]:
+      sayCurr = "CURRENCY. " + arg_data[8] + ".\n\n\n" # The country's currency
+   else:
+      sayCurr = ""
+   sayPop = "POPULATION. " + str(arg_data[6]) + ".\n\n\n" # The country's population
+   if arg_US == 1:
+      askQues = "\n\n\n WHICH STATE? WOULD YOU LIKE TO SEE.\n\n\n" # Ask the user to choose a US state
+   else:
+      askQues = "\n\n\n WHICH CITY? IN " + arg_data[1] + " WOULD YOU LIKE TO SEE.\n\n\n" # Ask the user to choose a city
+   toSay = sayName + sayCap + sayLang + sayCurr + sayPop + askQues # Compile all facts to say about the country
+   openEspeakSubProc(toSay) # Speak all facts about the country
+
+
+# Read aloud a state's details
+def speakStateInfo(arg_data, arg_random):
+   killEspeakSubProc() # Stop speaking if a process is open
+   if arg_random == 1:
+      sayName = "I CHOSE " + arg_data[1] + ".\n\n\n" # The name of the randomly chosen state
+   else:
+      sayName = arg_data[1] + ".\n" # The name of the state
+   if arg_data[7]:
+      sayCap = "CAPITAL. " + arg_data[7] + ".\n\n\n" # The state's capital
+   else:
+      sayCap = ""
+   sayPop = "POPULATION. " + str(arg_data[6]) + ".\n\n\n" # The state's population
+   askQues = "\n\n\n WHICH CITY? IN " + arg_data[1] + " WOULD YOU LIKE TO SEE.\n\n\n" # Ask the user to choose a city in the state
+   toSay = sayName + sayCap + sayPop + askQues # Compile all facts to say about the country
+   openEspeakSubProc(toSay) # Speak all facts about the country
+
+
+# Read aloud a city's details
+def speakCityInfo(arg_data, arg_US, arg_random):
+   killEspeakSubProc() # Stop speaking if a process is open
+   if arg_random == 1:
+      sayName = "I CHOSE " + arg_data[1] + ".\n\n\n" # The name of the randomly chosen city
+   else:
+      sayName = arg_data[1] + ".\n" # The name of the city
+   sayPop = "POPULATION. " + str(arg_data[6]) + ".\n\n\n" # The city's population
+   if arg_US == 1:
+      askQues = "\n\n\n WHICH OTHER CITY? IN " + arg_data[2] + " WOULD YOU LIKE TO SEE.\n\n\n" # Ask the user to choose a city in the state
+   else:
+      askQues = "\n\n\n WHICH OTHER CITY? IN " + arg_data[3] + " WOULD YOU LIKE TO SEE.\n\n\n" # Ask the user to choose a city in the country
+   toSay = sayName + sayPop + askQues # Compile all facts to say about the country
+   openEspeakSubProc(toSay) # Speak all facts about the country</code></pre>
+		</p><br><br>
+
+
+
+
+		<p class="header2">Speech Recognition (geoSpeechRecog.py):</p>
+		<p>
+			This Python script defines functions that apply the speech recognition, determining which grammar file / dictionary files to use, and then decoding the audio input and returning as interpreted text:
+		</p>
+		<p>
+			<pre><code class="code lang-python">import pocketsphinx as ps;
+
+
+# Create the countries decoder and the function to guess the country spoken
+countriesDecoder = ps.Decoder(jsgf='/home/pi/Split Grammar Files/countries.gram', dict='/home/pi/Split Grammar Files/countries.dic', samprate='16000');
+def decodeCountry():
+   fh = open("/home/pi/recording.wav", "rb")
+   countriesDecoder.decode_raw(fh)
+   countryGuess = countriesDecoder.get_hyp()[0]
+   return countryGuess
+
+
+# Create the states decoder and the function to guess the state spoken
+statesDecoder = ps.Decoder(jsgf='/home/pi/Split Grammar Files/states.gram', dict='/home/pi/Split Grammar Files/states.dic', samprate='16000');
+def decodeState():
+   fh = open("/home/pi/recording.wav", "rb")
+   statesDecoder.decode_raw(fh)
+   stateGuess = statesDecoder.get_hyp()[0]
+   return stateGuess
+
+
+# Import the country lookup file which maps names to the numbers of their individual grammar / dictionary files
+# Also define a function that maps country name to number
+finCountryLookup = open('/home/pi/Split Grammar Files/countrylookup.txt', "r");
+linesCountryLookup = finCountryLookup.readlines();
+finCountryLookup.close;
+
+def lookupCountryNum(arg_country):
+   for line in linesCountryLookup:
+      columns = line.split('\t')
+      if columns[0] == arg_country:
+         countryNum = columns[1]
+         break
+   return countryNum
+
+
+# Import the state lookup file which maps names to the numbers of their individual grammar / dictionary files
+# Also define a function that maps state name to number
+finStateLookup = open('/home/pi/Split Grammar Files/statelookup.txt', "r");
+linesStateLookup = finStateLookup.readlines();
+finStateLookup.close;
+
+def lookupStateNum(arg_state):
+   for line in linesStateLookup:
+      columns = line.split('\t')
+      if columns[0] == arg_state:
+         stateNum = columns[1]
+         break
+   return stateNum
+
+
+# Create the decoder for all cities in a country
+def countryCityDecoder(arg_country):
+   countryNum = lookupCountryNum(arg_country)
+   dictpath = "/home/pi/Split Grammar Files/country.dic" + str(countryNum).rstrip("\n")
+   grampath = "/home/pi/Split Grammar Files/country.gram" + str(countryNum).rstrip("\n")
+   countryCityDecoder = ps.Decoder(jsgf=grampath, dict=dictpath, samprate='16000')
+   return countryCityDecoder
+
+
+# Create the decoder for all cities in a state
+def stateCityDecoder(arg_state):
+   stateNum = lookupStateNum(arg_state)
+   dictpath = "/home/pi/Split Grammar Files/state.dic" + str(stateNum).rstrip("\n")
+   grampath = "/home/pi/Split Grammar Files/state.gram" + str(stateNum).rstrip("\n")
+   stateCityDecoder = ps.Decoder(jsgf=grampath, dict=dictpath, samprate='16000')
+   return stateCityDecoder
+
+
+# Get the city spoken (for the country initially specified)
+def decodeCity(arg_decoder):
+   fh = open("/home/pi/recording.wav", "rb")
+   arg_decoder.decode_raw(fh)
+   cityGuess = arg_decoder.get_hyp()[0]
+   return cityGuess</code></pre>
+		</p><br><br>
+
+
+
+
+		<p class="header2">Servo Motor Control (moveServos.py):</p>
+		<p>
+			This Python script defines functions that move the servo motors to the appropriate positions based on longitude and latitude. Three servo motors are used for a full 360 degrees of longitudinal motion. And one additional servo is used for latitude.
+		</p>
+		<p>
+			<pre><code class="code lang-python">from Adafruit_PWM_Servo_Driver import PWM;
+import time;
+
+
+pwm = PWM(0x40, debug=True); # Initialize the PWM device using the default address
+pwm.setPWMFreq(60); # Set frequency to 60 Hz
+servoMin = 150;  # Min pulse length out of 4096
+servoMax = 600;  # Max pulse length out of 4096
+
+
+# Run this to cut (and reset) the servo signals
+def reinitializeServos():
+   global pwm
+   pwm = PWM(0x40, debug=True) # Initialize the PWM device using the default address
+   pwm.setPWMFreq(60) # Set frequency to 60 Hz
+
+
+# Move servo based on angle
+# Note: Do Not pass this function an angle larger than fullSweep!!! You might break the motor!!!
+def moveServo(arg_pin, arg_angle):
+   if arg_pin == 0:
+      fullSweep = 138 # Total degrees that servo 0 can sweep (from 150-600 pulse length)
+   elif arg_pin == 1:
+      fullSweep = 168 # Total degrees that servo 1 can sweep (from 150-600 pulse length)
+   elif arg_pin == 2:
+      fullSweep = 155 # Total degrees that servo 2 can sweep (from 150-600 pulse length)
+   elif arg_pin == 3:
+      fullSweep = 156 # Total degrees that servo 3 can sweep (from 150-600 pulse length)
+   equivalentPulseLength = int(round(servoMin + ((servoMax - servoMin) * (1.00 * arg_angle / fullSweep))))
+   pwm.setPWM(arg_pin, 0, equivalentPulseLength)
+
+
+# Position the servo motors to their starting positions and initialize the global position variables
+servoAngleZero = 10.00;
+moveServo(0, 10);
+time.sleep(1.5);
+servoAngleOne = 10.00;
+moveServo(1, 10);
+time.sleep(1.5);
+servoAngleTwo = 10.00;
+moveServo(2, 10);
+time.sleep(1.5);
+servoAngleThree = 70.00;
+moveServo(3, 70);
+time.sleep(1.5);
+reinitializeServos();
+
+
+# Move servo more slowly based on old and new angles
+def moveServoSlowly(arg_pin, arg_angle, prev_arg_angle):
+   global servoAngleZero
+   global servoAngleOne
+   global servoAngleTwo
+   global servoAngleThree
+   if arg_angle > prev_arg_angle:
+      angle_dif = int(round(1.00 * arg_angle - 1.00 * prev_arg_angle))
+      for x in range(0, angle_dif):
+         new_angle = prev_arg_angle + x
+         moveServo(arg_pin, new_angle)
+         time.sleep(0.05)
+      moveServo(arg_pin, arg_angle)
+      if arg_pin == 0:
+         servoAngleZero = arg_angle
+      elif arg_pin == 1:
+         servoAngleOne = arg_angle
+      elif arg_pin == 2:
+         servoAngleTwo = arg_angle
+      elif arg_pin == 3:
+         servoAngleThree = arg_angle
+   elif arg_angle < prev_arg_angle:
+      angle_dif = int(round(1.00 * prev_arg_angle - 1.00 * arg_angle))
+      for x in range(0, angle_dif):
+         new_angle = prev_arg_angle - x
+         moveServo(arg_pin, new_angle)
+         time.sleep(0.05)
+      moveServo(arg_pin, arg_angle)
+      if arg_pin == 0:
+         servoAngleZero = arg_angle
+      elif arg_pin == 1:
+         servoAngleOne = arg_angle
+      elif arg_pin == 2:
+         servoAngleTwo = arg_angle
+      elif arg_pin == 3:
+         servoAngleThree = arg_angle
+   else:
+      moveServo(arg_pin, arg_angle)
+
+
+# Move globe based on longitude
+# The starting point is all 3 servos set to 10 degrees - this lined up with 66 degrees E
+def moveServosByLongitude(arg_long):
+   if (arg_long <= 66 and arg_long > -54):
+      # 66 to -54: 0 -> 10 to 130, 1 -> 10, 2 -> 10
+      anglecalc = 76 - arg_long
+      moveServoSlowly(0, anglecalc, servoAngleZero)
+      time.sleep(0.5)
+      moveServoSlowly(1, 10, servoAngleOne)
+      time.sleep(0.5)
+      moveServoSlowly(2, 10, servoAngleTwo)
+      time.sleep(0.5)
+   elif (arg_long <= -54 and arg_long > -174):
+      # -54 to -174: 0 -> 130, 1 -> 10 to 130, 2 -> 10
+      moveServoSlowly(0, 130, servoAngleZero)
+      time.sleep(0.5)
+      anglecalc = -44 - arg_long
+      moveServoSlowly(1, anglecalc, servoAngleOne)
+      time.sleep(0.5)
+      moveServoSlowly(2, 10, servoAngleTwo)
+      time.sleep(0.5)
+   elif (arg_long <= -174 and arg_long >= -180):
+      # -174 to -180: 0 -> 130, 1 -> 130, 1 -> 10 to 16
+      moveServoSlowly(0, 130, servoAngleZero)
+      time.sleep(0.5)
+      moveServoSlowly(1, 130, servoAngleOne)
+      time.sleep(0.5)
+      anglecalc = -164 - arg_long
+      moveServoSlowly(2, anglecalc, servoAngleTwo)
+      time.sleep(0.5)
+   elif (arg_long <= 180 and arg_long > 66):
+      # 180 to 66: 0 -> 130, 1 -> 130, 2 -> 16 to 130
+      moveServoSlowly(0, 130, servoAngleZero)
+      time.sleep(0.5)
+      moveServoSlowly(1, 130, servoAngleOne)
+      time.sleep(0.5)
+      anglecalc = 196 - arg_long
+      moveServoSlowly(2, anglecalc, servoAngleTwo)
+      time.sleep(0.5)
+
+
+# Map current longitude to a new scale of 66 -> 0 and 67 -> -359
+def mapLongToEasyScale(arg_real_long):
+   if (arg_real_long <= 66 and arg_real_long >= -180):
+      easy_scale_long = arg_real_long - 66
+   elif (arg_real_long > 66 and arg_real_long <= 180):
+      easy_scale_long = arg_real_long - 360 - 66
+   return easy_scale_long
+
+
+# Map back to the real longitude scale: 0 -> 66 and -359 -> 67
+def mapLongToRealScale(arg_easy_long):
+   if (arg_easy_long <= 0 and arg_easy_long >= -246):
+      real_scale_long = arg_easy_long + 66
+   elif (arg_easy_long < -246 and arg_easy_long >= -360):
+      real_scale_long = arg_easy_long + 360 + 66
+   return real_scale_long
+
+
+# Move servos 80 degrees to the left or right of the longitude to get the globe spinning and account for inaccuracy due to inertia
+def gainLongitudeMomentum(arg_prior_long, arg_curr_long):
+   prior_long_easy = mapLongToEasyScale(arg_prior_long)
+   curr_long_easy = mapLongToEasyScale(arg_curr_long)
+   if (curr_long_easy <= 0 and curr_long_easy >= -80):
+      new_long_easy = curr_long_easy - 80
+   elif (curr_long_easy <= -280 and curr_long_easy >= -360):
+      new_long_easy = curr_long_easy + 80
+   elif (curr_long_easy < -80 and curr_long_easy > -280):
+      if curr_long_easy >= prior_long_easy:
+         new_long_easy = curr_long_easy - 80
+      elif curr_long_easy < prior_long_easy:
+         new_long_easy = curr_long_easy + 80
+   new_long_real = mapLongToRealScale(new_long_easy)
+   moveServosByLongitude(new_long_real)
+
+
+# Move arm based on latitude
+# The starting point is 72 degrees on the servo - this is set to physically line up with the equator
+def moveServosByLatitude(arg_lat):
+   if arg_lat < -72:
+      moveServoSlowly(3, 0, servoAngleThree)
+   elif arg_lat > 84:
+      moveServoSlowly(3, 156, servoAngleThree)
+   elif arg_lat >= -72 and arg_lat <= 84:
+      anglecalc = arg_lat + 72
+      moveServoSlowly(3, anglecalc, servoAngleThree)
+   time.sleep(0.5)
+
+
+# Create a combined longitude / latitude function
+def moveServosByLongLat(arg_longitude, arg_latitude, arg_prior_longitude):
+   gainLongitudeMomentum(arg_prior_longitude, arg_longitude)
+   moveServosByLongitude(arg_longitude)
+   reinitializeServos()
+   moveServosByLatitude(arg_latitude)
+   reinitializeServos()</code></pre>
+		</p><br><br>
+
+
+
+
+		<p class="header2">SQLite Queries (sqliteGeoQueries.py):</p>
+		<p>
+			This Python script defines functions that query the SQLite database to pull information for the location specified:
+		</p>
+		<p>
+			<pre><code class="code lang-python">import sqlite3; #SQLite python module
+
+sqliteConnection = object();
+sqliteCursor = object();
+
+def openConnection():
+   global sqliteConnection
+   global sqliteCursor
+   sqliteConnection = sqlite3.connect('Geo.db'); #establish the connection to the Sqlite database
+   sqliteConnection.text_factory = str; #necessary to import 8-bit bytestrings - these input files are not unicode
+   sqliteCursor = sqliteConnection.cursor(); #create a cursor object to call its execute method for the connection
+   sqliteCursor.execute("attach database 'Geo.db' as 'geo'"); #attach the database alias
+
+def closeConnection():
+   global sqliteConnection
+   global sqliteCursor
+   sqliteConnection.close(); #close the Sqlite connection
+
+
+# Pull all information for a specific country
+def countryInfo(arg_country):
+   openConnection()
+   if arg_country[0:4] == "THE ":
+      arg_country_final = arg_country[4:]
+   else:
+      arg_country_final = arg_country
+   queryText = "select * from geo.globe where ascii_name = country and ascii_name = '" + arg_country_final + "' order by capital desc limit 1"
+   queryResults =  list(sqliteCursor.execute(queryText))
+   closeConnection()
+   return queryResults[0]
+
+
+# Pull all information for a specific state
+def stateInfo(arg_state):
+   openConnection()
+   queryText = "select * from geo.globe where ascii_name = state and ascii_name = '" + arg_state + "' order by population desc limit 1"
+   queryResults =  list(sqliteCursor.execute(queryText))
+   closeConnection()
+   return queryResults[0]
+
+
+# Pull all information for a specific city (non-US)
+def countryCityInfo(arg_country, arg_city):
+   openConnection()
+   if arg_country[0:4] == "THE ":
+      arg_country_final = arg_country[4:]
+   else:
+      arg_country_final = arg_country
+   queryText = "select * from geo.globe where capital is null and country = '" + arg_country_final + "' and ascii_name = '" + arg_city + "' order by population desc limit 1"
+   queryResults =  list(sqliteCursor.execute(queryText))
+   closeConnection()
+   return queryResults[0]
+
+
+# Pull all information for a specific city (US)
+def stateCityInfo(arg_state, arg_city):
+   openConnection()
+   queryText = "select * from geo.globe where capital is null and state = '" + arg_state + "' and ascii_name = '" + arg_city + "' order by population desc limit 1"
+   queryResults =  list(sqliteCursor.execute(queryText))
+   closeConnection()
+   return queryResults[0]
+
+
+# Pick a random country and pull information
+def randomCountryInfo():
+   openConnection()
+   randomCountry = list(sqliteCursor.execute("select country from (select distinct country from geo.globe where country is not null) order by random() limit 1"))[0][0]
+   closeConnection()
+   return countryInfo(randomCountry)
+
+
+# Pick a random state and pull information
+def randomStateInfo():
+   openConnection()
+   randomState = list(sqliteCursor.execute("select state from (select distinct state from geo.globe where state is not null) order by random() limit 1"))[0][0]
+   closeConnection()
+   return stateInfo(randomState)
+
+
+# Pick a random city and pull information (non-US)
+def randomCountryCityInfo(arg_country):
+   openConnection()
+   randomCity = list(sqliteCursor.execute("select ascii_name from (select distinct ascii_name from geo.globe where capital is null and country = '" + arg_country + "') order by random() limit 1"))[0][0]
+   closeConnection()
+   return countryCityInfo(arg_country, randomCity)
+
+
+# Pick a random city and pull information (US)
+def randomStateCityInfo(arg_state):
+   openConnection()
+   randomCity = list(sqliteCursor.execute("select ascii_name from (select distinct ascii_name from geo.globe where capital is null and state = '" + arg_state + "') order by random() limit 1"))[0][0]
+   closeConnection()
+   return stateCityInfo(arg_state, randomCity)
+
+
+# Valid countries
+def getValidCountries():
+   all_countries = []
+   openConnection()
+   almost_all_countries = list(sqliteCursor.execute("select distinct country from geo.globe where country is not null order by country"))
+   closeConnection()
+   plural_countries = ["ALAND ISLANDS", "BAHAMAS", "BRITISH VIRGIN ISLANDS", "CAYMAN ISLANDS", "COCOS ISLANDS", "COOK ISLANDS", "FALKLAND ISLANDS", "FAROE ISLANDS", "FRENCH SOUTHERN TERRITORIES", "HEARD ISLAND AND MCDONALD ISLANDS", "MARSHALL ISLANDS", "NETHERLANDS", "NORTHERN MARIANA ISLANDS", "PHILIPPINES", "SOLOMON ISLANDS", "SOUTH GEORGIA AND THE SOUTH SANDWICH ISLANDS", "TURKS AND CAICOS ISLANDS", "U S VIRGIN ISLANDS", "UNITED ARAB EMIRATES", "UNITED KINGDOM", "UNITED STATES", "UNITED STATES MINOR OUTLYING ISLANDS"]
+   for country_name in almost_all_countries:
+      all_countries.append(country_name[0])
+      if country_name[0] in plural_countries:
+         the_country_name = "THE " + country_name[0]
+         all_countries.append(the_country_name)
+   return all_countries
+
+
+# Valid states
+def getValidStates():
+   all_states = []
+   openConnection()
+   all_states_temp = list(sqliteCursor.execute("select distinct state from geo.globe where state is not null order by state"))
+   closeConnection()
+   for state_name in all_states_temp:
+      all_states.append(state_name[0])
+   return all_states
+
+
+# Valid country cities
+def getValidCountryCities(arg_country):
+   all_cities = []
+   openConnection()
+   all_cities_temp = list(sqliteCursor.execute("select distinct ascii_name from geo.globe where capital is null and country = '" + arg_country + "' order by ascii_name"))
+   for city_name in all_cities_temp:
+      all_cities.append(city_name[0])
+   closeConnection()
+   return all_cities
+
+
+# Valid state cities
+def getValidStateCities(arg_state):
+   all_cities = []
+   openConnection()
+   all_cities_temp = list(sqliteCursor.execute("select distinct ascii_name from geo.globe where capital is null and state = '" + arg_state + "' order by ascii_name"))
+   for city_name in all_cities_temp:
+      all_cities.append(city_name[0])
+   closeConnection()
+   return all_cities</code></pre>
+		</p><br><br>
+
+
+
+
+		<p class="header2">Main Python Script (finalcode.py):</p>
+		<p>
+			This is the main Python script that runs once the Pi boots:
+		</p>
+		<p>
+			<pre><code class="code lang-python">#!/usr/bin/env python2.7
+
+# MODULE IMPORTS
+# --------------------------------------------------
+import os;
+import sys;
+from subprocess import Popen;
+import time;
+import RPi.GPIO as gpio;
+import aplayEspeak;
+import sqliteGeoQueries as sql;
+import geoSpeechRecog;
+import moveServos;
+# --------------------------------------------------
+
+
+# INITIAL VARIABLE DECLARATIONS
+# --------------------------------------------------
+pushButtonPin = 23; # This is port P23 (BCM) - equivalent to pin 16 (BOARD)
+laserPin = 25; # This is port P25 (BCM)
+previousInterrupt = "r"; # Indicates whether the prior interrupt was a press "p" or release "r"
+hierarchyLevel = 1; # 1 = Country, 2 = State, 3 = City
+choseUS = 0; # If US chosen as country, then 1
+randomChoice = 0; # When 1, specifies that the location was chosen at random
+country = ""; # The country chosen
+state = ""; # The state chosen
+city = ""; # The city chosen
+numSleeps = 0; # The number of seconds (approximately) that have passed since the last button press/release
+priorLongitude = 66; # The longitude of the prior location
+recordCommand = "arecord -D plughw:1,0 -f cd -c 1 -r 16000 recording.wav"; # Command to record input from microphone
+recordSubProcess = object(); # Initialize the recording sub process object that will be started and stopped by interrupts
+onFlyDecoder = object(); # Initialize the decoder object that will be reassigned on the fly to dynamically change the lexicon as needed
+validCountries = sql.getValidCountries(); # Array of all countries
+validStates = sql.getValidStates(); # Array of all states
+validCities = []; # Array of possible city values in a country / state
+waysToChooseUS = ["UNITED STATES", "THE UNITED STATES"] ; # Array of possible ways to choose the United States
+waysToAskForDifCountry = ["LETS PICK A COUNTRY", "LETS PICK ANOTHER COUNTRY", "LETS PICK A DIFFERENT COUNTRY", "LETS CHOOSE A COUNTRY", "LETS CHOOSE ANOTHER COUNTRY", "LETS CHOOSE A DIFFERENT COUNTRY", "LETS SEE A COUNTRY", "LETS SEE ANOTHER COUNTRY", "LETS SEE A DIFFERENT COUNTRY"]; # Array of possible ways to ask for a different country
+waysToAskForDifState = ["LETS PICK A STATE", "LETS PICK ANOTHER STATE", "LETS PICK A DIFFERENT STATE", "LETS CHOOSE A STATE", "LETS CHOOSE ANOTHER STATE", "LETS CHOOSE A DIFFERENT STATE", "LETS SEE A STATE", "LETS SEE ANOTHER STATE", "LETS SEE A DIFFERENT STATE"]; # Array of possible ways to ask for a different state
+tryAgain = "SORRY I DIDNT GET THAT. PLEASE TRY AGAIN.";
+askForCountry = "WHICH COUNTRY? WOULD YOU LIKE TO SEE.";
+askForState = "WHICH STATE? WOULD YOU LIKE TO SEE.";
+# --------------------------------------------------
+
+
+# GPIO SETUP
+# --------------------------------------------------
+gpio.setmode(gpio.BCM); # Set up the BCM port numbering scheme
+gpio.setup(pushButtonPin, gpio.IN, pull_up_down=gpio.PUD_UP); # Set the push button GPIO pin as input with pull-up/down resistor set to UP (HIGH when not pressed)
+gpio.setup(laserPin, gpio.OUT); # Set the laser GPIO pin as output
+gpio.output(laserPin, False) # Turn off the laser
+# --------------------------------------------------
+
+
+# PUSH BUTTON INTERRUPT SETUP
+# --------------------------------------------------
+def buttonPress():
+   global recordSubProcess
+   aplayEspeak.killEspeakSubProc() # Stop speaking
+   gpio.output(laserPin, False) # Turn off the laser
+   moveServos.reinitializeServos() # Cut the signals to the servo motors if still moving
+   recordSubProcess = Popen(recordCommand.split()) # Start recording
+
+def hierarchyLevelOne():
+   global recordSubProcess
+   global hierarchyLevel
+   global choseUS
+   global country
+   global state
+   global city
+   global randomChoice
+   global onFlyDecoder
+   global validCities
+   global priorLongitude
+   aplayEspeak.openEspeakSubProc("SURE.\n ONE MOMENT PLEASE.\n")
+   country = geoSpeechRecog.decodeCountry()
+   if country == "YOUR CHOICE":
+      randomChoice = 1 # Indicate that the country is chosen at random
+      countryData = sql.randomCountryInfo() # Pull the information for a random country
+      country = countryData[1] # Re-assign the country variable to the chosen name
+   else:
+      randomChoice = 0 # Indicate that the country is not chosen at random
+   if country in validCountries:
+      if country in waysToChooseUS: # If the US was chosen
+         choseUS = 1 # Indicate that the US was chosen
+         hierarchyLevel = 2 # A state will be expected as the next input
+      else:
+         choseUS = 0 # Indicate that the US was not chosen
+         hierarchyLevel = 3 # A city will be expected as the next input
+      countryData = sql.countryInfo(country) # Pull all necessary data from the database
+      moveServos.moveServosByLongLat(countryData[5], countryData[4], priorLongitude) # Move the servos to the appropriate longitude and latitude
+      priorLongitude = countryData[5]
+      if choseUS == 0:
+         onFlyDecoder = geoSpeechRecog.countryCityDecoder(country) # Prepare the decoder for the cities in the country chosen
+         validCities = sql.getValidCountryCities(country) # Assign the list of all valid values for the next question
+      gpio.output(laserPin, True) # Turn on the laser
+      aplayEspeak.speakCountryInfo(countryData, choseUS, randomChoice) # Speak aloud all of the country's details and ask for a city/state
+   else:
+      aplayEspeak.openEspeakSubProc(tryAgain)
+
+def hierarchyLevelTwo():
+   global recordSubProcess
+   global hierarchyLevel
+   global choseUS
+   global country
+   global state
+   global city
+   global randomChoice
+   global onFlyDecoder
+   global validCities
+   global priorLongitude
+   aplayEspeak.openEspeakSubProc("SURE.\n")
+   state = geoSpeechRecog.decodeState()
+   if state == "YOUR CHOICE":
+      randomChoice = 1 # Indicate that the state is chosen at random
+      stateData = sql.randomStateInfo() # Pull the information for a random state
+      state = stateData[1] # Re-assign the state variable to the chosen name
+   else:
+      randomChoice = 0 # Indicate that the state is not chosen at random
+   if state in waysToAskForDifCountry:
+      hierarchyLevel = 1
+      choseUS = 0
+      aplayEspeak.openEspeakSubProc(askForCountry)
+   elif state in validStates:
+      hierarchyLevel = 3 # A city will be expected as the next input
+      stateData = sql.stateInfo(state) # Pull all necessary data from the database
+      moveServos.moveServosByLongLat(stateData[5], stateData[4], priorLongitude) # Move the servos to the appropriate longitude and latitude
+      priorLongitude = stateData[5]
+      onFlyDecoder = geoSpeechRecog.stateCityDecoder(state) # Prepare the decoder for the cities in the state chosen
+      gpio.output(laserPin, True) # Turn on the laser
+      validCities = sql.getValidStateCities(state) # Assign the list of all valid values for the next question
+      aplayEspeak.speakStateInfo(stateData, randomChoice) # Speak aloud all of the country's details and ask for a state
+   else:
+      aplayEspeak.openEspeakSubProc(tryAgain)
+
+def hierarchyLevelThree():
+   global recordSubProcess
+   global hierarchyLevel
+   global choseUS
+   global country
+   global state
+   global city
+   global randomChoice
+   global onFlyDecoder
+   global priorLongitude
+   aplayEspeak.openEspeakSubProc("SURE.\n")
+   city = geoSpeechRecog.decodeCity(onFlyDecoder)
+   if city == "YOUR CHOICE":
+      randomChoice = 1 # Indicate that the state is chosen at random
+      if choseUS == 1:
+         cityData = sql.randomStateCityInfo(state) # Pull the information for a random city in the state
+      else:
+         cityData = sql.randomCountryCityInfo(country) # Pull the information for a random city in the country
+ city = cityData[1] # Re-assign the city variable to the chosen name
+   else:
+      randomChoice = 0 # Indicate that the state is not chosen at random
+   if city in waysToAskForDifCountry:
+      hierarchyLevel = 1
+      choseUS = 0
+      aplayEspeak.openEspeakSubProc(askForCountry)
+   elif (choseUS == 1 and city in waysToAskForDifState):
+      hierarchyLevel = 2
+      aplayEspeak.openEspeakSubProc(askForState)
+   elif city in validCities:
+      if choseUS == 1:
+         cityData = sql.stateCityInfo(state, city) # Pull all necessary data from the database
+      else:
+         cityData = sql.countryCityInfo(country, city) # Pull all necessary data from the database
+      moveServos.moveServosByLongLat(cityData[5], cityData[4], priorLongitude) # Move the servos to the appropriate longitude and latitude
+      priorLongitude = cityData[5]
+      gpio.output(laserPin, True) # Turn on the laser
+      aplayEspeak.speakCityInfo(cityData, choseUS, randomChoice) # Speak aloud all of the country's details and ask for a city/state
+   else:
+      aplayEspeak.openEspeakSubProc(tryAgain)
+
+def buttonRelease():
+   global recordSubProcess
+   global hierarchyLevel
+   recordSubProcess.kill() # Stop recording
+   if hierarchyLevel == 1:
+      hierarchyLevelOne()
+   elif hierarchyLevel == 2:
+      hierarchyLevelTwo()
+   elif hierarchyLevel == 3:
+      hierarchyLevelThree()
+
+def buttonCallback(channel): # Define a threaded callback function to run in another thread when events are detected
+   global previousInterrupt
+   global numSleeps
+   numSleeps = 0
+   if (gpio.input(pushButtonPin) == 0 and previousInterrupt == "r"): # if pin value == 0 / signal LOW / button pressed and last interrupt was release (in case missed release)
+      previousInterrupt = "p" # Indicate that a button press was recognized
+      buttonPress() # Execute the button press logic
+   elif (gpio.input(pushButtonPin) == 1 and previousInterrupt == "p"): # if pin value == 1 / signal HIGH / button released and last interrupt was press (in case missed press)
+      previousInterrupt = "r" # Indicate that a button release was recognized
+      buttonRelease() # Execute the button release logic
+
+gpio.add_event_detect(pushButtonPin, gpio.BOTH, callback=buttonCallback, bouncetime=100); # When a changing edge is detected, interrupt the script and run the callback function
+# --------------------------------------------------
+
+
+# GREETING
+# --------------------------------------------------
+greetingText = "HELLO.\n LET ME SHOW YOU THE WORLD.\n\n\n " + askForCountry;
+aplayEspeak.openEspeakSubProc(greetingText);
+# --------------------------------------------------
+
+
+# MAIN LOOP
+# --------------------------------------------------
+try:
+   while(True):
+      time.sleep(1) #Sleep until interrupted
+      numSleeps = numSleeps + 1
+      if numSleeps == 180: #After 3 minutes, move back to starting position and turn off laser
+         hierarchyLevel = 1
+         choseUS = 0
+         gpio.output(laserPin, False)
+         moveServos.moveServosByLongLat(66, 0, priorLongitude)
+         priorLongitude = 66
+         aplayEspeak.openEspeakSubProc(askForCountry)
+except KeyboardInterrupt:
+   print "Keyboard Interrupt"
+   gpio.cleanup()
+except:
+   print "Unexpected error:", sys.exc_info()[0]
+   gpio.cleanup()
+   raise
+# --------------------------------------------------</code></pre>
+		</p><br><br><br><br>
+
+		<a href="/interactive-globe" class="continue_to">&#8680; Back to Overview</a><br><br><br><br><br>
+
+	</div>
+
+
+
+		<div id='prefooter'></div>
+	</div>
+
+	<div id='footer'>
+		<div>&copy; Gil Soffer</div>
+	</div>
+
+</body>
+
+<script type="text/javascript" src="/assets/javascript/jquery.min.js"></script><!-- bootstrap requires jquery -->
+<script type="text/javascript" src="/assets/javascript/bootstrap.min.js"></script>
+<script type="text/javascript" src="/assets/javascript/app.js"></script>
+<script type="text/javascript" src="/assets/javascript/highlight.pack.js"></script><!-- i included Bash, SQL, Arduino, and Python - re-download and replace for more languages (don't need to replace default.css) -->
+<script>hljs.initHighlightingOnLoad();</script>
+
+</html>

@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+	<title>Gil Soffer</title>
+	<link rel="icon" href="/assets/images/favicon.png">
+	<meta charset="utf-8">
+	<meta name="description" content="Gil Soffer: Personal Website">
+	<meta name="author" content="Gil Soffer">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel=stylesheet type=text/css href="/assets/css/app.css">
+	<link rel=stylesheet type=text/css href="/assets/css/default.css"><!-- used by highlight.js (I modified this css to my liking) -->
+</head>
+
+<body>
+
+	<div class="container-fluid">
+
+		<nav id='site-nav'>
+			<div id='site-nav-header'>
+				<a id='site-nav-home' href="/">Gil Soffer</a>
+				<button type="button" id='site-nav-button' data-toggle="collapse" data-target="#site-nav-links">
+					<span class="site-nav-button-bar"></span>
+					<span class="site-nav-button-bar"></span>
+					<span class="site-nav-button-bar"></span>
+				</button>
+			</div>
+			<div id='site-nav-links' class="collapse">
+				<ul>
+					<li><a href="/web-development">Web Development</a></li>
+					<li><a href="/electronics">Electronics</a></li>
+					<li><a href="https://github.com/gsoffer" target="_blank" class="external">GitHub</a></li>
+					<li><a href="https://www.linkedin.com/in/gil-soffer" target="_blank" class="external">LinkedIn</a></li>
+					<li><a href="mailto:gsoffer2@gmail.com" class="external">Contact</a></li>
+				</ul>
+			</div>
+		</nav>
+
+		
+	<div id='project-title'>Audio Sombrero</div>
+	<div id='project-hr'></div><br class='project-br'>
+	<div id='project-nav-button'>
+		<button id='project-nav-button-show' onclick="projectNavShow()">Sections &ensp; +</button>
+		<button id='project-nav-button-hide' onclick="projectNavHide()">Sections &ensp; &ndash;</button>
+	</div>
+	<div id='project-nav' class="project-nav-hide">
+		<a href="/audio-sombrero">Overview</a><br class='project-br'><br class='project-br'>
+		<a href="/audio-sombrero-hardware">Hardware</a>
+	</div>
+
+	
+	<div id='content'>
+
+		<p class='header1'>Overview</p>
+		<p>
+			<b>This sombrero plays Mexican music when you put in on!</b><br><br>
+			In this project, a momentary capacitive touch sensor is used to detect human touch, in this case your head, when the sombrero is put on. The Audio FX Sound Board is triggered by the sensor to play a random song that has been saved onto the board's 16MB flash storage. Ogg Vorbis Mono Output format audio files were uploaded to maximize the number of songs stored. Nine songs were fit this way, all of which are off the Original Soundtrack of a video game called Guacamelee. The moment I heard these songs I knew I had to walk around with them playing from my head. If the sombrero is still on once a song has finished playing, it will begin playing one of the remaining songs at random, and you can get through all 9 songs this way. Otherwise, it will not play another song until you put the sombrero back on. The audio board outputs to a battery powered speaker that can get impressively loud as you can see in the video below. The sombrero also acts as a resonator due to its shape, and amplifies the audio, so it's even louder once mounted to the sombrero. The audio in the video is produced by the sombrero.
+		</p><br>
+
+		<p class='header1'>Videos</p>
+		<div class='div-iframe'>
+			<iframe src="https://www.youtube.com/embed/BT09lCWxdW8" frameborder="0" allowfullscreen></iframe>
+		</div><br><br><br>
+
+		<p class='header1'>Creation</p>
+		<div class="slideshow">
+						<img class="slideshow_images" src="/assets/images/Sombrero_1.jpg">
+						<img class="slideshow_images" src="/assets/images/Sombrero_2.jpg">
+						<img class="slideshow_images" src="/assets/images/Sombrero_3.jpg">
+						<img class="slideshow_images" src="/assets/images/Sombrero_4.jpg">
+						<img class="slideshow_images" src="/assets/images/Sombrero_5.jpg">
+						<img class="slideshow_images" src="/assets/images/Sombrero_6.jpg">
+						<img class="slideshow_images" src="/assets/images/Sombrero_7.jpg">
+						<img class="slideshow_images" src="/assets/images/Sombrero_8.jpg">
+						<img class="slideshow_images" src="/assets/images/Sombrero_9.jpg">
+						<img class="slideshow_images" src="/assets/images/Sombrero_10.jpg">
+						<img class="slideshow_images" src="/assets/images/Sombrero_11.jpg">
+						<img class="slideshow_images" src="/assets/images/Sombrero_12.jpg">
+						<img class="slideshow_images" src="/assets/images/Sombrero_13.jpg">
+						<img class="slideshow_images" src="/assets/images/Sombrero_14.jpg">
+						<img class="slideshow_images" src="/assets/images/Sombrero_15.jpg">
+						<img class="slideshow_images" src="/assets/images/Sombrero_16.jpg">
+						<img class="slideshow_images" src="/assets/images/Sombrero_17.jpg">
+						<img class="slideshow_images" src="/assets/images/Sombrero_18.jpg">
+						<a class="slideshow_buttons" style="left:0;" onclick="changeImage(-1)">&#10094;</a>
+			<a class="slideshow_buttons" style="right:0;" onclick="changeImage(1)">&#10095;</a>
+		</div><br><br><br><br><br>
+
+		<a href="/audio-sombrero-hardware" class="continue_to">&#8680; Continue to Hardware</a><br><br><br><br><br>
+
+	</div>
+
+
+
+		<div id='prefooter'></div>
+	</div>
+
+	<div id='footer'>
+		<div>&copy; Gil Soffer</div>
+	</div>
+
+</body>
+
+<script type="text/javascript" src="/assets/javascript/jquery.min.js"></script><!-- bootstrap requires jquery -->
+<script type="text/javascript" src="/assets/javascript/bootstrap.min.js"></script>
+<script type="text/javascript" src="/assets/javascript/app.js"></script>
+<script type="text/javascript" src="/assets/javascript/highlight.pack.js"></script><!-- i included Bash, SQL, Arduino, and Python - re-download and replace for more languages (don't need to replace default.css) -->
+<script>hljs.initHighlightingOnLoad();</script>
+
+</html>

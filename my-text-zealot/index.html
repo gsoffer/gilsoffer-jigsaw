@@ -1,0 +1,162 @@
+<!DOCTYPE HTML>
+<html lang="en">
+
+<head>
+	<title>My Text Zealot</title>
+	<link rel="icon" href="/assets/images/favicon_mytextzealot.png">
+	<meta charset="UTF-8">
+	<meta name="description" content="My Text Zealot: Text Transformation Web Tool">
+	<meta name="keywords" content="text, data, transform, transformation, manipulate, manipulation, field, web, tool, privacy, format, csv, delimiter, delimited, quoted, header, calculate, calculated, input, output, utf-8, utf8, encoding, tab, comma, pipe, colon, space, white, whitespace, function, case, sentitive, uppercase, upper, lowercase, lower, title, sentence, reverse, pad, padding, length, trim, leading, trailing, remove, replace, string, substring, split, part, concatenate, number, numeric, operation, convert, format, add, subtract, multiply, divide, exponentiate, exponentiation, exponent, mod, modulus, date, days, zealot, text transformation, text manipulation, text field, text transformation web tool, my text zealot, process delimited text, make text uppercase, make text lowercase, replace text, remove text, pad text, pad text to length, force text to length, force text to specific length, force text to specified length, trim leading, trim leading 0s from, trim leading zeroes, trim text, trim trailing, text substring, substring of text, split text on delimiter, split text into parts, split csv, split text file, process text file, transform text file, concatenate text, text concatenation, date formating, date formatting, number formating, number formatting, add days to date, process csv files online">
+	<meta name="author" content="Gil Soffer">
+	<link rel="stylesheet" type="text/css" href="/assets/css/mytextzealot.min.css">
+</head>
+
+<body>
+	<!-- SITE TOP NAV / HEADER -->
+	<div id="site_header">
+		"My" , "Text" , "Zealot"
+		<div id="site_subtitle">
+			Text Transformation Web Tool
+		</div>
+	</div>
+	<!-- END OF SITE TOP NAV / HEADER -->
+
+	<!-- SITE MAIN BODY -->
+	<div id="site_body">
+		<!-- SITE DESCRIPTION -->
+		<div id="site_description">
+			Transforms your input text into your desired output text<br><br>
+			Works with CSVs and other delimited text<br><br>
+			Works with UTF-8 and other encodings<br><br>
+			Respects your privacy: No data is transferred anywhere. All processing is done directly within your browser
+		</div>
+		<div class="dividers"></div>
+		<!-- END OF SITE DESCRIPTION -->
+
+		<!-- STEP 1 SECTION - ENTER INPUT TEXT -->
+		<p class="section_instructions">
+			Step 1 - Paste your input text into the box below
+		</p>
+		<textarea id="input" rows="20" onfocus="clearExampleText()" onchange="generateInputPreviewTable()">Name,Title,Class,Moral Alignment,Awesomeness Level
+Frodo Baggins,Ringbearer,Hobbit,Good,10
+Gandalf,Leader of the Fellowship,Wizard,Good,10
+Samwise "Sam" Gamgee,Friend of Frodo,Hobbit,Good,10
+Gollum (Sméagol),Earlier Ringbearer,Hobbit,Debatable,10
+Aragorn,King of Gondor,Númenorean,Good,10
+Legolas,King of the Mirkwood Elves,Elf,Good,10
+Saruman the White,Head of the Order of Wizards,Wizard,Evil,10
+Gimli,Dwarf of the Lonely Mountain,Dwarf,Good,10
+Boromir,Steward of Gondor,Human,Debatable,10
+Sauron,Dark Lord,Spirit of Evil,Evil,10
+Elrond,Master of Rivindell,Elf,Good,10
+Arwen Evenstar,Daughter of Elrond,Elf,Good,10
+Galadriel,Lady of the Golden Wood of Lothlórien,Elf,Good,10
+Meriadoc "Merry" Brandybuck,Cousin of Frodo,Hobbit,Good,10
+Peregrin "Pippin" Took,Cousin of Frodo,Hobbit,Good,10</textarea>
+		<div class="dividers"></div>
+		<!-- END OF STEP 1 SECTION -->
+
+		<!-- STEP 2 SECTION - DEFINE INPUT LAYOUT -->
+		<p class="section_instructions">
+			Step 2 - Define your input text's layout (the table representation below should help)
+		</p>
+		Input Field Delimiter:&nbsp;&nbsp;&nbsp;&nbsp;
+		<select id="input_delimiter_select" onchange="setCustomDelimDisplay('input'); generateInputPreviewTable();">
+			<option value="COMMA">Comma</option>
+			<option value="PIPE">Pipe</option>
+			<option value="COLON">Colon</option>
+			<option value="TAB">Tab</option>
+			<option value="SPACE">Space</option>
+			<option value="WHITESPACE">White Space</option>
+			<option value="OTHER">[Other]</option>
+		</select>&nbsp;&nbsp;&nbsp;
+		<div id="custom_input_delimiter">
+			Custom Delimiter: &nbsp;&nbsp;<input type="text" id="input_delimiter_other" onchange="generateInputPreviewTable()">
+		</div><br>
+		Double Quoted Values:&nbsp;&nbsp;
+		<select id="input_quoted" onchange="generateInputPreviewTable()">
+			<option value="0">No</option>
+			<option value="1">Yes</option>
+		</select><br>
+		Header Included:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		<select id="input_header" onchange="generateInputPreviewTable()">
+			<option value="0">No</option>
+			<option value="1">Yes</option>
+		</select><br><br><br>
+		<table id="input_preview"></table>
+		<div class="dividers"></div>
+		<!-- END OF STEP 2 SECTION -->
+
+		<!-- STEP 3 SECTION - DEFINE OUTPUT FIELDS -->
+		<p class="section_instructions">
+			Step 3 - Define your desired transformations and output fields<br><br>
+			<span class="note">Note: Don't refresh your browser, as all of your specifications below will be cleared</span>
+		</p>
+		<table id="output_field_specs"></table><br>
+		<button onclick="addOutputField(false);">+ Output Field</button>&nbsp;&nbsp;&nbsp;
+		<button onclick="addOutputField(true);">+ Hidden Field *</button>&nbsp;&nbsp;&nbsp;
+		<span class="note">*Calculated field excluded from the output, that can feed output fields</span>
+		<div class="dividers"></div>
+		<!-- END OF STEP 3 SECTION -->
+
+		<!-- STEP 4 SECTION - DEFINE OUTPUT LAYOUT -->
+		<p class="section_instructions">
+			Step 4 - Specify your desired output text's format
+		</p>
+		Output Field Delimiter:&nbsp;&nbsp;
+		<select id="output_delimiter_select" onchange="setCustomDelimDisplay('output');">
+			<option value="COMMA">Comma</option>
+			<option value="PIPE">Pipe</option>
+			<option value="COLON">Colon</option>
+			<option value="TAB">Tab</option>
+			<option value="SPACE">Space</option>
+			<option value="OTHER">[Other]</option>
+		</select>&nbsp;&nbsp;&nbsp;
+		<div id="custom_output_delimiter">
+			Custom Delimiter: &nbsp;&nbsp;<input type="text" id="output_delimiter_other">
+		</div><br>
+		Double Quoted Values:&nbsp;&nbsp;&nbsp;
+		<select id="output_quoted">
+			<option value="0">No</option>
+			<option value="1">Yes</option>
+		</select><br>
+		Include a Header:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		<select id="output_header">
+			<option value="0">No</option>
+			<option value="1">Yes</option>
+		</select><br>
+		New Line Character:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		<select id="output_eol">
+			<option value="crlf">Windows (CRLF)</option>
+			<option value="lf">Unix (LF)</option>
+		</select>
+		<div class="dividers"></div>
+		<!-- END OF STEP 4 SECTION -->
+
+		<!-- STEP 5 SECTION - RUN PROCESS AND GENERATE OUTPUT -->
+		<p class="section_instructions">
+			Step 5 - Generate output text
+		</p>
+		<div id="run_button_div">
+			<button id="run_button" onclick="run()">Run</button>
+		</div><br><br>
+		<textarea id="output" rows="20"></textarea>
+		<div id="copy_output_button_div">
+			<button onclick="copyText('output');">Copy text to clipboard</button>
+		</div><br><br><br><br>
+		<!-- END OF STEP 5 SECTION -->
+	</div>
+	<!-- END OF SITE MAIN BODY -->
+
+	<!-- SITE FOOTER -->
+	<div id="site_footer">
+		<div>&copy; Gil Soffer<a id="feedback_link" href="mailto:gsoffer2@gmail.com">Feedback</a></div>
+	</div>
+	<!-- END OF SITE FOOTER -->
+
+	<!-- JAVASCRIPT -->
+	<script src="/assets/javascript/mytextzealot.min.js"></script>
+	<!-- END OF JAVASCRIPT -->
+</body>
+
+</html>
