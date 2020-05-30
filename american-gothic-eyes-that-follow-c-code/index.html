@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+	<title>Gil Soffer</title>
+	<link rel="icon" href="/assets/images/favicon.png">
+	<meta charset="utf-8">
+	<meta name="description" content="Gil Soffer: Personal Website">
+	<meta name="author" content="Gil Soffer">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel=stylesheet type=text/css href="/assets/css/app.css">
+	<link rel=stylesheet type=text/css href="/assets/css/default.css"><!-- used by highlight.js (I modified this css to my liking) -->
+</head>
+
+<body>
+
+	<div class="container-fluid">
+
+		<nav id='site-nav'>
+			<div id='site-nav-header'>
+				<a id='site-nav-home' href="/">Gil Soffer</a>
+				<button type="button" id='site-nav-button' data-toggle="collapse" data-target="#site-nav-links">
+					<span class="site-nav-button-bar"></span>
+					<span class="site-nav-button-bar"></span>
+					<span class="site-nav-button-bar"></span>
+				</button>
+			</div>
+			<div id='site-nav-links' class="collapse">
+				<ul>
+					<li><a href="/web-development">Web Development</a></li>
+					<li><a href="/electronics">Electronics</a></li>
+					<li><a href="https://github.com/gsoffer" target="_blank" class="external">GitHub</a></li>
+					<li><a href="https://www.linkedin.com/in/gil-soffer" target="_blank" class="external">LinkedIn</a></li>
+					<li><a href="mailto:gsoffer2@gmail.com" class="external">Contact</a></li>
+				</ul>
+			</div>
+		</nav>
+
+		
+	<div id='project-title'>American Gothic - Eyes that Follow</div>
+	<div id='project-hr'></div><br class='project-br'>
+	<div id='project-nav-button'>
+		<button id='project-nav-button-show' onclick="projectNavShow()">Sections &ensp; +</button>
+		<button id='project-nav-button-hide' onclick="projectNavHide()">Sections &ensp; &ndash;</button>
+	</div>
+	<div id='project-nav' class="project-nav-hide">
+		<a href="/american-gothic-eyes-that-follow">Overview</a><br class='project-br'><br class='project-br'>
+		<a href="/american-gothic-eyes-that-follow-hardware">Hardware</a><br class='project-br'><br class='project-br'>
+		<a href="/american-gothic-eyes-that-follow-c-code">C Code</a>
+	</div>
+
+	
+	<div id='content'>
+
+		<p class='header1'>C Code</p>
+
+
+
+
+		<p class="header2">Overview:</p>
+		<p>
+			The Arduino samples the sensors 20 times per second to determine which have been triggered, and if multiple, how long ago each sensor was triggered. The eye positions are refreshed twice per second, controlled by the timer overflow interrupt. In the case that multiple sensors are triggered at a given time, the eyes will move to the latest triggered direction. The servos are detached once movement has stopped to conserve battery life.
+		</p><br><br>
+
+
+
+
+		<p class="header2">C Code:</p>
+		<p>
+			<pre><code class="code lang-arduino">#include &lt;avr/interrupt.h>
+#include &lt;avr/io.h>
+#include &lt;Servo.h>
+
+
+//Initial Declarations
+int calibrationTime = 20; //the time in seconds we give the sensors to calibrate (10-60 secs according to the datasheet)
+
+int signalPinMale = 9; //the digital output pin connected to the male's servo
+int signalPinFemale = 10; //the digital output pin connected to the female's servo
+int pirPinLeft = 7; //the digital input pin connected to the left PIR sensor's output
+int pirPinStraight = 2; //the digital input pin connected to the straight PIR sensor's output
+int pirPinRight = 4; //the digital input pin connected to the right PIR sensor's output
+int pirPinLeftState = 0; //the state of the left sensor (0 - Low or 1 - High)
+int pirPinStraightState = 0; //the state of the straight sensor (0 - Low or 1 - High)
+int pirPinRightState = 0; //the state of the right sensor (0 - Low or 1 - High)
+
+int leftAngleMale = 120; //the angle that the male's servo motor must be in to look left
+int straightAngleMale = 95; //the angle that the male's servo motor must be in to look straight
+int rightAngleMale = 70; //the angle that the males servo motor must be in to look right
+int leftAngleFemale = 75; //the angle that the female's servo motor must be in to look left
+int straightAngleFemale = 100; //the angle that the female's servo motor must be in to look straight
+int rightAngleFemale = 125; //the angle that the females servo motor must be in to look right
+char currentAngle; //the angle that the servo motor is currently at: 'l', 's', or 'r'
+
+boolean timerInterrupt = false; //whether the timer interrupt is enabled
+boolean sensorTriggeredLeft = false; //change from low to high from left sensor input
+boolean sensorTriggeredStraight = false; //change from low to high from straight sensor input
+boolean sensorTriggeredRight = false; //change from low to high from right sensor input
+boolean motionStoppedLeft = true; //whether to begin counting duration left sensor output is low
+boolean motionStoppedStraight = true; //whether to begin counting duration straight sensor output is low
+boolean motionStoppedRight = true; //whether to begin counting duration right sensor output is low
+long unsigned int timeHighLeft = 0; //the time when the left sensor's output changes from low to high
+long unsigned int timeHighStraight = 0; //the time when the straight sensor's output changes from low to high
+long unsigned int timeHighRight = 0; //the time when the right sensor's output changes from low to high
+long unsigned int timeLowLeft = 0; //the time when the left sensor's output changes from high to low
+long unsigned int timeLowStraight = 0; //the time when the straight sensor's output changes from high to low
+long unsigned int timeLowRight = 0; //the time when the right sensor's output changes from high to low
+unsigned int overflows = 0; //the number of timer overflow interrupts that were fired
+unsigned int posRefresh = 500; //the number of timer overflow interrupts (and ms) before eye positions refreshed
+int minLowDuration = 60; //the minimum time in ms a signal must be low before we assume motion has stopped
+
+Servo servoMale; //declare the servo motor and name for the male
+Servo servoFemale; //declare the servo motor and name for the female
+
+
+
+//Attach Servos
+void attachServos(){
+
+   if(servoMale.attached() == 0){ //if male servo not attached
+      servoMale.attach(signalPinMale); //attach male servo
+   }
+   else{}
+   if(servoFemale.attached() == 0){ //if female servo not attached
+      servoFemale.attach(signalPinFemale); //attach female servo
+   }
+   else{}
+
+}
+
+//Detach Servos
+void detachServos(){
+
+   if(servoMale.attached()){ //if male servo attached
+      servoMale.detach(); //detach male servo
+   }
+   else{}
+   if(servoFemale.attached()){ //if female servo attached
+      servoFemale.detach(); //detach female servo
+   }
+   else{}
+
+}
+
+//Look Left
+void lookLeft(){
+   if(currentAngle != 'l'){
+      attachServos();
+      servoMale.write(leftAngleMale);
+      servoFemale.write(leftAngleFemale);
+      currentAngle = 'l';
+      //Serial.println("look left"); //print to screen for debugging
+   }
+   else{
+      detachServos();
+   }
+}
+
+//Look Straight
+void lookStraight(){
+   if(currentAngle != 's'){
+      attachServos();
+      servoMale.write(straightAngleMale);
+      servoFemale.write(straightAngleFemale);
+      currentAngle = 's';
+      //Serial.println("look straight"); //print to screen for debugging
+   }
+   else{
+      detachServos();
+   }
+}
+
+//Look Right
+void lookRight(){
+   if(currentAngle != 'r'){
+      attachServos();
+      servoMale.write(rightAngleMale);
+      servoFemale.write(rightAngleFemale);
+      currentAngle = 'r';
+      //Serial.println("look right"); //print to screen for debugging
+   }
+   else{
+      detachServos();
+   }
+}
+
+
+
+//Timer2 Overflow Interrupt Vector, called every 1ms
+ISR(TIMER2_OVF_vect) {
+
+   overflows++; //Increments the interrupt counter
+
+   //Refresh eye positions every "posRefresh" ms:
+   //The eye position reflects the sensor last triggered high in the case that multiple are triggered simultaneously
+
+   if(overflows == posRefresh){
+      overflows = 0; //Resets the interrupt counter
+      if((sensorTriggeredLeft == true) && (sensorTriggeredStraight == true) && (sensorTriggeredRight == true)){
+         if((timeHighLeft >= timeHighRight) && (timeHighLeft >= timeHighStraight)){lookLeft();}
+         else if((timeHighStraight >= timeHighLeft) && (timeHighStraight >= timeHighRight)){lookStraight();}
+         else{lookRight();}
+      }
+      else if((sensorTriggeredLeft == true) && (sensorTriggeredStraight == true)){
+         if(timeHighLeft >= timeHighStraight){lookLeft();}
+         else{lookStraight();}
+      }
+      else if((sensorTriggeredStraight == true) && (sensorTriggeredRight == true)){
+         if(timeHighStraight >= timeHighRight){lookStraight();}
+         else{lookRight();}
+      }
+      else if((sensorTriggeredLeft == true) && (sensorTriggeredRight == true)){
+         if(timeHighLeft >= timeHighRight){lookLeft();}
+         else{lookRight();}
+      }
+      else if(sensorTriggeredLeft == true){lookLeft();}
+      else if(sensorTriggeredStraight == true){lookStraight();}
+      else if(sensorTriggeredRight == true){lookRight();}
+      else{}
+   }
+
+   TCNT2 = 130; //Reset Timer to 130 out of 255 for 1 ms overflow
+   TIFR2 = 0x00; //Timer2 INT Flag Reg: Clear Timer Overflow Flag
+
+}
+
+
+
+void setup(){
+
+   //Pin assignments and servo position initialization
+   pinMode(pirPinLeft, INPUT); //configures the pin to behave as input
+   pinMode(pirPinStraight, INPUT); //configures the pin to behave as input
+   pinMode(pirPinRight, INPUT); //configures the pin to behave as input
+   digitalWrite(pirPinLeft, LOW); //disables the 20K internal pullup resistor for input
+   digitalWrite(pirPinStraight, LOW); //disables the 20K internal pullup resistor for input
+   digitalWrite(pirPinRight, LOW); //disables the 20K internal pullup resistor for input
+   attachServos(); //attach both servos
+   servoMale.write(straightAngleMale); //initialize male servo to look straight
+   servoFemale.write(straightAngleFemale); //initialize female servo to look straight
+   currentAngle = 's'; //Begin looking straight
+
+   //Timer2 overflow initialization
+   TCCR2B = 0x00; //Disable Timer2 while we set it up
+   TCNT2 = 130; //Reset Timer Count to 130 out of 255
+   TIFR2 = 0x00; //Timer2 INT Flag Reg: Clear Timer Overflow Flag
+   TCCR2A = 0x00; //Timer2 Control Reg A: Wave Gen Mode normal
+   TCCR2B = 0x05; //Timer2 Control Reg B: Timer Prescaler set to 128
+
+   //Give the sensors some time to calibrate
+   for(int i = 0; i < calibrationTime; i++){
+      delay(1000);
+   }
+
+   //Begin serial output, which is only used here for debugging
+   //Serial.begin(9600);
+
+}
+
+
+
+void loop(){
+
+   delay(50); //Sample the sensors every 50ms (20 times per second)
+
+   pirPinLeftState = digitalRead(pirPinLeft);
+   pirPinStraightState = digitalRead(pirPinStraight);
+   pirPinRightState = digitalRead(pirPinRight);
+
+   //A sensor is considered triggered when either:
+   //1) The pin state is high.
+      //Or
+   //2) Pin state is low, but has not yet been low for over "minLowDuration" ms, so may be momentary false low
+   //False highs are not an issue and don't occur
+   //False lows occur once motion stops, as a sensor moves back past it's threshold for motion, fluctuating between 0 and 1 until stabilizing at 0
+
+   //Left Sensor Current State
+   if((motionStoppedLeft == true) && (sensorTriggeredLeft == true)){
+      if((pirPinLeftState == LOW) && ((millis() - timeLowLeft) >= minLowDuration)){
+         sensorTriggeredLeft = false;
+      }
+      else if(pirPinLeftState == HIGH){
+         motionStoppedLeft = false;
+      }
+      else{}
+   }
+   else if((sensorTriggeredLeft == false) && (pirPinLeftState == HIGH)){
+      timeHighLeft = millis();
+      sensorTriggeredLeft = true;
+      motionStoppedLeft = false;
+   }
+   else if((sensorTriggeredLeft == true) && (pirPinLeftState == LOW)){
+      motionStoppedLeft = true;
+      timeLowLeft = millis();
+   }
+   else{}
+
+   //Straight Sensor Current State
+   if((motionStoppedStraight == true) && (sensorTriggeredStraight == true)){
+      if((pirPinStraightState == LOW) && ((millis() - timeLowStraight) >= minLowDuration)){
+         sensorTriggeredStraight = false;
+      }
+      else if(pirPinStraightState == HIGH){
+         motionStoppedStraight = false;
+      }
+      else{}
+   }
+   else if((sensorTriggeredStraight == false) && (pirPinStraightState == HIGH)){
+      timeHighStraight = millis();
+      sensorTriggeredStraight = true;
+      motionStoppedStraight = false;
+   }
+   else if((sensorTriggeredStraight == true) && (pirPinStraightState == LOW)){
+      motionStoppedStraight = true;
+      timeLowStraight = millis();
+   }
+   else{}
+
+   //Right Sensor Current State
+   if((motionStoppedRight == true) && (sensorTriggeredRight == true)){
+      if((pirPinRightState == LOW) && ((millis() - timeLowRight) >= minLowDuration)){
+         sensorTriggeredRight = false;
+      }
+      else if(pirPinRightState == HIGH){
+         motionStoppedRight = false;
+      }
+      else{}
+   }
+   else if((sensorTriggeredRight == false) && (pirPinRightState == HIGH)){
+      timeHighRight = millis();
+      sensorTriggeredRight = true;
+      motionStoppedRight = false;
+   }
+   else if((sensorTriggeredRight == true) && (pirPinRightState == LOW)){
+      motionStoppedRight = true;
+      timeLowRight = millis();
+   }
+   else{}
+
+   //Timer Interrupt State
+   //The interrupt is disabled when no motion is detected to eliminate needless processing, and is re-enabled once motion is detected
+   if(((sensorTriggeredLeft == true) || (sensorTriggeredStraight == true) || (sensorTriggeredRight == true)) && (timerInterrupt == false)){
+      TIMSK2 = 0x01; //Timer2 INT Reg: Timer2 Overflow Interrupt Enable
+      timerInterrupt = true;
+   }
+   else if(((sensorTriggeredLeft == false) && (sensorTriggeredStraight == false) && (sensorTriggeredRight == false)) && (timerInterrupt == true)){
+      TIMSK2 = 0x00; //Timer2 INT Reg: Timer2 Overflow Interrupt Disable
+      timerInterrupt = false;
+   }
+   else{}
+
+}</code></pre>
+		</p><br><br><br><br>
+
+		<a href="/american-gothic-eyes-that-follow" class="continue_to">&#8680; Back to Overview</a><br><br><br><br><br>
+
+	</div>
+
+
+
+		<div id='prefooter'></div>
+	</div>
+
+	<div id='footer'>
+		<div>&copy; Gil Soffer</div>
+	</div>
+
+</body>
+
+<script type="text/javascript" src="/assets/javascript/jquery.min.js"></script><!-- bootstrap requires jquery -->
+<script type="text/javascript" src="/assets/javascript/bootstrap.min.js"></script>
+<script type="text/javascript" src="/assets/javascript/app.js"></script>
+<script type="text/javascript" src="/assets/javascript/highlight.pack.js"></script><!-- i included Bash, SQL, Arduino, and Python - re-download and replace for more languages (don't need to replace default.css) -->
+<script>hljs.initHighlightingOnLoad();</script>
+
+</html>
