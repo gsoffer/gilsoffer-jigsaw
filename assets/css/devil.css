@@ -1,0 +1,53 @@
+html, body {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+#title {
+  text-align: center;
+  font-family: Georgia;
+  font-size: 30px;
+  margin-top: 50px;
+  margin-bottom: 50px;
+  color: #C00000;
+  width: 90%;
+  margin-left: auto;
+  margin-right: auto;
+}
+#sprites {
+  margin-left: auto;
+  margin-right: auto;
+  width: 450px;
+  margin-bottom: 50px;
+  cursor: pointer;
+}
+#sprites img {
+  display: none;
+}
+#speech_bubble {
+  border: 2px solid #C00000;
+  border-radius: 10px;
+  line-height: 1.75;
+  padding: 30px;
+  width: 500px;
+  margin-left: auto;
+  margin-right: auto;
+  font-family: Georgia;
+  font-size: 18px;
+  margin-bottom: 50px;
+  color: #C00000;
+}
+
+@media screen and (max-width: 580px) {
+  #speech_bubble {
+    width: calc(100% - 60px);
+    padding: 20px;
+  }
+}
+
+@media screen and (max-width: 450px) {
+  #sprites,
+  #sprites img {
+    width: 100%;
+  }
+}
